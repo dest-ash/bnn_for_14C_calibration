@@ -1,0 +1,8 @@
+predictions file used as last version in "last_version" directory :
+ :
+Without covariables :
+	part_1 : .last_bnn_part_1_without_covariables_v1_for_applications_middle_points_predictions.csv
+	part_2 : .last_bnn_part_2_without_covariables_v1_for_applications_middle_points_predictions.csv
+With covariables 
+	part_1 :
+	part_2 : .last_bnn_part_2_with_covariables_v1_for_applications_middle_points_predictions.csv

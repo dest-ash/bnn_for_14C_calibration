@@ -1,0 +1,49 @@
+# Byte-compiled / cache
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Environnements virtuels
+.venv/
+venv/
+env/
+ENV/
+.conda/
+
+# Config d’éditeur
+*.dat
+*.tmp
+.vscode/
+.vscodium/
+.idea/
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Fichiers de logs
+*.log
+
+# Notebooks checkpoints
+.ipynb_checkpoints/
+
+# Données temporaires
+*.csv
+*.tsv
+
+# Build / distribution
+build/
+dist/
+*.egg-info/
+.eggs/
+
+# Tests / coverage
+.coverage
+htmlcov/
+.tox/
+.pytest_cache/
+
+# Config sensible
+*.env
+.envrc
+
