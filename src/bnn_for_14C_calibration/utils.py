@@ -5,6 +5,17 @@ import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
 
+from pathlib import Path
+
+
+def download_and_cache_lib_data(
+    reload = False
+):
+    url = "https://github.com/dest-ash/bnn_for_14C_calibration/tree/main/models"
+    cache_dir_name = ".bnn_for_14C_calibration"
+    path_to_user_home = Path.home().resolve()
+
+
 
 def read_params_from_file(file_path) :
     """
