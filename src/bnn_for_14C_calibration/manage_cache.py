@@ -158,7 +158,7 @@ def clear_cache():
 def download_cache_lib_data(
     overwrite = False
 ):
-    if overwrite or not (CACHE_DIR.exists() and CACHE_DIR.is_dir())
+    if overwrite or not (CACHE_DIR.exists() and CACHE_DIR.is_dir()) :
         if overwrite :
             print(f"""
                 overwrite is {overwrite} : the cache will be cleared before 
