@@ -1,8 +1,9 @@
 # -*- coding: utf-8 -*-
 
 
-from pathlib import Path
 import requests
+from pathlib import Path
+import time
 import shutil
 
 
@@ -26,25 +27,118 @@ MODELS_DIR_LOCAL = CACHE_DIR / "models"
 
 # téléchargement d'un dossier github
 def download_github_folder(
-    api_url: str, 
-    local_dir: Path
+    repo_api_url: str,
+    local_dir: Path,
+    token: str = None,
+    retries: int = 3,
+    timeout: float = 10,
+    sleep_time: float = 0.2
 ):
-    response = requests.get(api_url)
-    response.raise_for_status()
-    items = response.json()
+    """
+    Télécharge un dossier GitHub (public ou privé) en gérant fichiers classiques et LFS.
+    Détecte automatiquement la branche par défaut et retente les fichiers LFS échoués.
+    
+    Parameters:
+    - repo_api_url: API URL du dossier (ex: https://api.github.com/repos/{owner}/{repo}/contents/{path})
+    - local_dir: chemin local où sauvegarder les fichiers
+    - token: optionnel, nécessaire pour repos privés ou pour éviter limites API
+    - retries: nombre de retentatives pour les fichiers LFS échoués
+    - timeout: délai maximal pour chaque requête HTTP
+    - sleep_time: délai entre chaque téléchargement pour éviter surcharge serveur
+    """
+    headers = {"Authorization": f"token {token}"} if token else {}
 
-    for item in items:
-        if item["type"] == "file":
-            file_url = item["download_url"]
-            local_path = local_dir / item["name"]
-            print(f"Downloading {file_url} → {local_path}")
-            r = requests.get(file_url)
-            r.raise_for_status()
-            local_path.write_bytes(r.content)
-        elif item["type"] == "dir":
-            subdir = local_dir / item["name"]
-            subdir.mkdir(exist_ok=True)
-            download_github_folder(item["url"], subdir)
+    # Déterminer la branche par défaut
+    parts = repo_api_url.split('/')
+    owner, repo = parts[3], parts[4]
+    repo_info_url = f"https://api.github.com/repos/{owner}/{repo}"
+    repo_info = requests.get(repo_info_url, headers=headers, timeout=timeout).json()
+    default_branch = repo_info.get("default_branch", "main")
+
+    failed_lfs_files = []
+
+    def _download_folder(api_url, local_dir):
+        response = requests.get(api_url, headers=headers, timeout=timeout)
+        response.raise_for_status()
+        items = response.json()
+
+        for item in items:
+            if item["type"] == "file":
+                file_url = item.get("download_url")
+                local_path = local_dir / item["name"]
+                local_path.parent.mkdir(parents=True, exist_ok=True)
+
+                if not file_url:
+                    print(f"Skipping {item['name']}, no download URL available")
+                    continue
+
+                print(f"Downloading {file_url} → {local_path}")
+                r = requests.get(file_url, headers=headers, timeout=timeout)
+                r.raise_for_status()
+
+                if r.text.startswith("version https://git-lfs.github.com/spec/v1"):
+                    # Fichier LFS
+                    lines = r.text.splitlines()
+                    oid_line = next((l for l in lines if l.startswith("oid sha256:")), None)
+                    if oid_line:
+                        oid = oid_line.split("oid sha256:")[1]
+                        # URL brute correcte pour n'importe quelle branche
+                        lfs_url = f"https://github.com/{owner}/{repo}/raw/{default_branch}/{item['path']}"
+                        try:
+                            lfs_r = requests.get(lfs_url, headers=headers, timeout=timeout)
+                            if lfs_r.status_code in (403, 404):
+                                print(f"    ❌ LFS file {item['name']} unavailable (status {lfs_r.status_code}). Will retry later.")
+                                failed_lfs_files.append((lfs_url, local_path))
+                            else:
+                                lfs_r.raise_for_status()
+                                local_path.write_bytes(lfs_r.content)
+                        except requests.RequestException as e:
+                            print(f"    ❌ Cannot download LFS file {item['name']}: {e}")
+                            failed_lfs_files.append((lfs_url, local_path))
+                    else:
+                        print(f"    ❌ Invalid LFS pointer for {item['name']}, skipping.")
+                else:
+                    local_path.write_bytes(r.content)
+
+                time.sleep(sleep_time)
+
+            elif item["type"] == "dir":
+                subdir = local_dir / item["name"]
+                subdir.mkdir(parents=True, exist_ok=True)
+                _download_folder(item["url"], subdir)
+
+    # Première passe
+    _download_folder(repo_api_url, local_dir)
+
+    # Retenter les fichiers LFS échoués
+    attempt = 1
+    while failed_lfs_files and attempt <= retries:
+        print(f"\nRetrying LFS files, attempt {attempt}/{retries}...")
+        remaining = []
+        for lfs_url, local_path in failed_lfs_files:
+            try:
+                lfs_r = requests.get(lfs_url, headers=headers, timeout=timeout)
+                if lfs_r.status_code in (403, 404):
+                    print(f"    ❌ Still unavailable: {local_path.name} (status {lfs_r.status_code})")
+                    remaining.append((lfs_url, local_path))
+                else:
+                    lfs_r.raise_for_status()
+                    local_path.write_bytes(lfs_r.content)
+                    print(f"    ✅ Downloaded {local_path.name}")
+            except requests.RequestException as e:
+                print(f"    ❌ Error downloading {local_path.name}: {e}")
+                remaining.append((lfs_url, local_path))
+            time.sleep(sleep_time)
+        failed_lfs_files = remaining
+        attempt += 1
+
+    if failed_lfs_files:
+        print("\n⚠️ Some LFS files could not be downloaded after retries:")
+        for _, local_path in failed_lfs_files:
+            print(f" - {local_path}")
+    else:
+        print("\n✅ All files downloaded successfully!")
+
 
 
 
