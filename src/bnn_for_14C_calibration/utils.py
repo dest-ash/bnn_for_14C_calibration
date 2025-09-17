@@ -5,6 +5,77 @@ import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
 
+from pathlib import Path
+
+from .manage_cache import(
+    CACHE_DIR,
+    download_cache_lib_data
+)
+
+
+def get_lib_data_paths():
+    """
+    Generate paths to embeded package data
+    or to data stored in local cache
+    """
+
+    # dossier contenant les scripts et données embarquées dans la librairie
+    # c.a.d dir_path = "chemin_absolu_vers_src/bnn_for_14C_calibration_c14"
+    dir_path = Path(__file__).resolve().parent 
+    
+    # ========================================================================
+    # embeded package data in src/bnn_for_14C_calibration/data : 
+    # ========================================================================
+    
+    ## TO DO : 
+    ## manage embeded package data in src/bnn_for_14C_calibration/data with 
+    ## import importlib.resources as pkg_resources
+    ## and see how to midify paths generated here and their use in the package
+
+    # dossier contenant les données IntCal20
+    IntCal20_dir = dir_path / "data" / "IntCal20"
+
+    # dossier contenant les variables exogènes 
+    covariates_dir = dir_path / "data" / "exogenous_variables"
+
+    # ========================================================================
+    # package data (to be) stored in local cache 
+    # ========================================================================
+
+    # dossier contenant les prédictions pré-sauvegardées de différents réseaux de neurones bayésiens
+    if not (CACHE_DIR.exists() and CACHE_DIR.is_dir()):
+        # pour tester en local depuis le repo git avant construction de la librairie, utiliser le chemin suivant : 
+        bnn_predictions_dir = dir_path.parents[1] / "models" / "predictions" / "last_version"
+        bnn_weights_dir = dir_path.parents[1] / "models" / "weights"
+
+        # si l'un des chemins locaux spécifié ci-dessus n'existe pas, 
+        # on crée le cache local et on re-définit les chemins en utilisant le cache créé
+        if not (
+            (
+                bnn_predictions_dir.exists() and bnn_predictions_dir.is_dir()
+            ) or (
+                bnn_weights_dir.exists() and bnn_weights_dir.is_dir()
+            )
+        ):
+            download_cache_lib_data()
+            bnn_predictions_dir = CACHE_DIR / "models" / "predictions" / "last_version"
+            bnn_weights_dir = CACHE_DIR / "models" / "weights"
+    else :
+        # sinon, pour la librairie finale, on utilise les prédictions en cache
+        bnn_predictions_dir = CACHE_DIR / "models" / "predictions" / "last_version"
+        bnn_weights_dir = CACHE_DIR / "models" / "weights"
+
+    paths_results_dict = {
+        "IntCal20_dir" : IntCal20_dir,
+        "covariates_dir" : covariates_dir,
+        "bnn_predictions_dir" : bnn_predictions_dir,
+        "bnn_weights_dir" : bnn_weights_dir
+    }
+    
+    return paths_results_dict
+
+
+
 
 def read_params_from_file(file_path) :
     """

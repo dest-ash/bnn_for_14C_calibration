@@ -18,35 +18,29 @@ from .bnn_models_built_in_utils import (
 )
 
 from .utils import (
+    get_lib_data_paths,
     load_data, 
     minimax_scaling
 )
 
 
-# gestion des chemins relatifs pour différents téléchargements et sauvegardes
-from pathlib import Path
+# ========================================================================
+# génération des chemins vers le cache local ou 
+# les données embarquées dans le package
+# ========================================================================
 
-# dossier contenant les scripts et données embarquées dans la librairie
-dir_path = Path(__file__).resolve().parent 
-# dir_path = "chemin_absolu_vers_src/bnn_for_14C_calibration_c14"
+paths_results_dict = get_lib_data_paths()
 
 # dossier contenant les données IntCal20
-IntCal20_dir = dir_path / "data" / "IntCal20"
-
-# dossier contenant les prédictions pré-sauvegardées de différents réseaux de neurones bayésiens
-cache_dir = Path.home() / ".bnn_for_14C_calibration"
-cache_dir = Path(cache_dir).resolve()
-if not cache_dir.exists():
-    # pour tester en local depuis le repo git avant construction de la librairie, utiliser le chemin suivant : 
-    bnn_predictions_dir = dir_path.parents[1] / "models" / "predictions" / "last_version"
-    bnn_weights_dir = dir_path.parents[1] / "models" / "weights"
-else :
-    # sinon, pour la librairie finale, on utilise les prédictions en cache
-    bnn_predictions_dir = cache_dir / "models" / "predictions" / "last_version"
-    bnn_weights_dir = cache_dir / "models" / "weights"
+IntCal20_dir = paths_results_dict["IntCal20_dir"]
 
 # dossier contenant les variables exogènes 
-covariates_dir = dir_path / "data" / "exogenous_variables"
+covariates_dir = paths_results_dict["covariates_dir"]
+
+# dossiers contenant les prédictions et les poids de modèles BNN
+bnn_predictions_dir = paths_results_dict["bnn_predictions_dir"]
+bnn_weights_dir = paths_results_dict["bnn_weights_dir"]
+
 
 # ========================================================================
 # conception de l'architecture du réseau des neurones

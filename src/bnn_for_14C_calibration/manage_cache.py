@@ -47,6 +47,7 @@ def download_github_folder(
             download_github_folder(item["url"], subdir)
 
 
+
 def clear_cache():
     """
     Supprime complètement le dossier cache de la librairie.
@@ -58,10 +59,18 @@ def clear_cache():
     else:
         print("ℹ️ No existing cache!")
 
+
+
 def download_cache_lib_data(
     overwrite = False
 ):
     if overwrite or not (CACHE_DIR.exists() and CACHE_DIR.is_dir())
+        if overwrite :
+            print(f"""
+                overwrite is {overwrite} : the cache will be cleared before 
+                downloading it again...
+            """)
+            clear_cache()
         print(f"Creating cache directory at: {CACHE_DIR}")
         CACHE_DIR.mkdir(parents=True, exist_ok=True)
         MODELS_DIR_LOCAL.mkdir(exist_ok=True)
