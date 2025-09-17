@@ -28,7 +28,7 @@ Thumbs.db
 .ipynb_checkpoints/
 
 # Données temporaires
-*.csv
+#*.csv
 *.tsv
 
 # Build / distribution
