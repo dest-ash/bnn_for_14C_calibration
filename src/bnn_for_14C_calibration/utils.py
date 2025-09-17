@@ -8,8 +8,8 @@ import matplotlib.pyplot as plt
 from pathlib import Path
 
 
-def download_and_cache_lib_data(
-    reload = False
+def download_cache_lib_data(
+    overwrite = False
 ):
     url = "https://github.com/dest-ash/bnn_for_14C_calibration/tree/main/models"
     cache_dir_name = ".bnn_for_14C_calibration"

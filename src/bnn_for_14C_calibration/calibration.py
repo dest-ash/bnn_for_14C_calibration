@@ -57,7 +57,7 @@ if not cache_dir.exists():
     # pour tester en local depuis le repo git avant construction de la librairie, utiliser le chemin suivant : 
     bnn_predictions_dir = dir_path.parents[1] / "models" / "predictions" / "last_version"
 else :
-    # sinon, pour la librairie finale, on décommente la ligne ci-dessous qui utilise les prédictions en cache
+    # sinon, pour la librairie finale, on utilise les prédictions en cache
     bnn_predictions_dir = cache_dir / "models" / "predictions" / "last_version"
 
 # dossier contenant les variables exogènes 

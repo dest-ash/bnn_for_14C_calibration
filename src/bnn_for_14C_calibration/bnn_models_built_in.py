@@ -41,7 +41,7 @@ if not cache_dir.exists():
     bnn_predictions_dir = dir_path.parents[1] / "models" / "predictions" / "last_version"
     bnn_weights_dir = dir_path.parents[1] / "models" / "weights"
 else :
-    # sinon, pour la librairie finale, on décommente la ligne ci-dessous qui utilise les prédictions en cache
+    # sinon, pour la librairie finale, on utilise les prédictions en cache
     bnn_predictions_dir = cache_dir / "models" / "predictions" / "last_version"
     bnn_weights_dir = cache_dir / "models" / "weights"
 
