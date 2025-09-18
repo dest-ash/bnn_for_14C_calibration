@@ -34,7 +34,7 @@ def clear_cache():
     Supprime complètement le dossier cache de la librairie.
     """
     if CACHE_DIR.exists():
-        print(f"🗑️ removing cache directory at : {CACHE_DIR}")
+        print(f"🗑️ removing cache directory at : {CACHE_DIR}...")
         shutil.rmtree(CACHE_DIR)
         print(f"🗑️ cache removed!")
     else:
@@ -120,7 +120,19 @@ def download_from_google_drive(url_or_id: str, output_path: Path, sleep_time: fl
 def download_from_huggingface(url: str, output_path: Path, timeout: int = 10, sleep_time: float = 0.2):
     """
     Download a file from Hugging Face Hub.
-    If the file is a .zip, it will be automatically extracted into output_path.
+    If the file is a .zip archive, its contents are extracted directly into `output_path`
+    without preserving the top-level folder from the archive.
+
+    Parameters
+    ----------
+    url : str
+        The direct Hugging Face Hub URL to the file.
+    output_path : pathlib.Path
+        Local path where the file or extracted contents will be saved.
+    timeout : float, optional
+        Timeout for HTTP requests (default 10 seconds).
+    sleep_time : float, optional
+        Delay in seconds after download to avoid throttling (default 0.2).
     """
     output_path.parent.mkdir(parents=True, exist_ok=True)
     temp_file = output_path.with_suffix(".tmp")
@@ -137,12 +149,26 @@ def download_from_huggingface(url: str, output_path: Path, timeout: int = 10, sl
 
         # Dézippe automatiquement si c'est un zip
         if str(url).endswith(".zip"):
-            print(f"📦 Extracting zip {temp_file} → {output_path}")
+            print(f"📦 Extracting zip {temp_file} → {output_path} (flatten top-level folder)")
             with zipfile.ZipFile(temp_file, "r") as zip_ref:
-                zip_ref.extractall(output_path)
-            temp_file.unlink()
+                for member in zip_ref.infolist():
+                    # Split path and skip the first component (top-level folder)
+                    path_parts = member.filename.split('/')
+                    if len(path_parts) > 1:
+                        target_path = output_path.joinpath(*path_parts[1:])
+                    else:
+                        target_path = output_path / member.filename
+
+                    if member.is_dir():
+                        target_path.mkdir(parents=True, exist_ok=True)
+                    else:
+                        target_path.parent.mkdir(parents=True, exist_ok=True)
+                        with zip_ref.open(member) as source, open(target_path, "wb") as target:
+                            target.write(source.read())
+            temp_file.unlink()  # Remove temporary zip file after extraction
         else:
             temp_file.rename(output_path)
+
     except Exception as e:
         raise RuntimeError(f"Hugging Face download failed for {output_path}: {e}")
 
@@ -316,7 +342,7 @@ def download_cache_lib_data(
                 downloading it again...
             """)
             clear_cache()
-        print(f"Creating cache directory at: {CACHE_DIR}")
+        print(f"******************** Creating cache directory at: {CACHE_DIR} ********************")
         CACHE_DIR.mkdir(parents=True, exist_ok=True)
         MODELS_DIR_LOCAL.mkdir(exist_ok=True)
         download_github_with_drive_map(MODELS_DIR_API_URL, MODELS_DIR_LOCAL)
