@@ -100,7 +100,7 @@ def download_from_google_drive(url_or_id: str, output_path: Path, sleep_time: fl
             print(f"Downloading Google Drive file id {file_id} → {output_path}")
             gdown.download(id=file_id, output=str(output_path), quiet=False, fuzzy=True)
     except Exception as e:
-        print(f"    ❌ Erreur Google Drive : {e}")
+        print(f"    ❌ Google Drive error : {e}")
     time.sleep(sleep_time)
 
 
@@ -173,44 +173,73 @@ def download_github_with_drive_map(
         et remplacer les fichiers selon drive_map.json.
         """
         local_dir.mkdir(parents=True, exist_ok=True)
-        drive_map_path = local_dir / "drive_map.json"
-        drive_map = {}
-        if drive_map_path.exists():
-            with open(drive_map_path, "r", encoding="utf-8") as f:
-                drive_map = json.load(f)
 
+        # Récupère la liste des fichiers du dossier GitHub
         response = requests.get(api_url, headers=headers, timeout=timeout)
         response.raise_for_status()
         items = response.json()
 
+        # Charge drive_map.json depuis GitHub si présent
+        drive_map = {}
+        for item in items:
+            if item["type"] == "file" and item["name"] == "drive_map.json":
+                local_map_path = local_dir / "drive_map.json"
+                print(f"📄 Found drive_map.json in {api_url}, downloading → {local_map_path}")
+                r_map = requests.get(item["download_url"], headers=headers, timeout=timeout)
+                r_map.raise_for_status()
+                local_map_path.write_text(r_map.text, encoding="utf-8")  # sauvegarde en local
+                drive_map = json.loads(r_map.text)  # charge en mémoire
+                break
+
+        # Extrait owner/repo pour GitHub
         parts = api_url.split('/')
-        owner, repo = parts[3], parts[4]
+        try:
+            i = parts.index("repos")
+            owner, repo = parts[i+1], parts[i+2]
+        except (ValueError, IndexError):
+            raise ValueError(f"Impossible d'extraire owner/repo depuis l'URL API GitHub : {api_url}")
+
         default_branch = get_default_branch(owner, repo)
 
         for item in items:
             relative_name = item["name"]
             local_path = local_dir / relative_name
 
-            # Cas Google Drive selon drive_map.json
+            # Cas Google Drive via drive_map.json
             if relative_name in drive_map and is_google_drive_url(drive_map[relative_name]):
-                download_from_google_drive(drive_map[relative_name], local_path, sleep_time=sleep_time)
-                continue
+                download_from_google_drive(
+                    drive_map[relative_name],
+                    local_path,
+                    sleep_time=sleep_time
+                )
+                continue  # ✅ éviter de re-télécharger depuis GitHub
 
             # Cas fichier GitHub classique
             if item["type"] == "file":
+                if relative_name in drive_map:
+                    # ✅ fichier déjà pris en charge via Google Drive
+                    print(f"Skipping GitHub file {relative_name}, handled via Google Drive")
+                    continue
+                if item["name"] == "drive_map.json":
+                    # déjà téléchargé ci-dessus
+                    continue
                 file_url = item.get("download_url")
                 if not file_url:
                     print(f"Skipping {item['name']}, no download URL")
                     continue
-                print(f"Downloading GitHub file {file_url} → {local_path}")
+                print(f"⬇️ Downloading GitHub file {file_url} → {local_path}")
                 local_path.parent.mkdir(parents=True, exist_ok=True)
                 r = requests.get(file_url, headers=headers, timeout=timeout)
                 r.raise_for_status()
                 local_path.write_bytes(r.content)
                 time.sleep(sleep_time)
 
-            # Cas sous-dossier
+            # Cas sous-dossier GitHub
             elif item["type"] == "dir":
+                if relative_name in drive_map:
+                    # ✅ dossier déjà pris en charge via Google Drive
+                    print(f"Skipping GitHub folder {relative_name}, handled via Google Drive")
+                    continue
                 subdir = local_dir / relative_name
                 _download_folder(item["url"], subdir)
 
