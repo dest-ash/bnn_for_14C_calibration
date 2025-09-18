@@ -342,6 +342,14 @@ def download_cache_lib_data(
                 downloading it again...
             """)
             clear_cache()
+        else :
+            print("""
+                This may be the first time you need package functions that use 
+                local cache data to work. A local cache directory is going to be 
+                created and will be used after if needed without a new downloading
+                unless you delete the cache. To download this cache, network connexion 
+                must be available ; also some disk space is required (less than 1 GB at all).
+            """)
         print(f"******************** Creating cache directory at: {CACHE_DIR} ********************")
         CACHE_DIR.mkdir(parents=True, exist_ok=True)
         MODELS_DIR_LOCAL.mkdir(exist_ok=True)
