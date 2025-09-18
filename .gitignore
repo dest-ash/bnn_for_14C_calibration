@@ -9,6 +9,9 @@ venv/
 env/
 ENV/
 .conda/
+conda_env_.yml
+conda_env.yml
+requirements-conda.txt
 
 # Config d’éditeur
 *.dat

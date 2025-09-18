@@ -1,0 +1,13 @@
+name: BNN14C
+channels:
+  - conda-forge
+  - defaults
+dependencies:
+  - python=3.9
+  - numpy
+  - matplotlib
+  - pandas
+  - gdown
+  - scikit-learn
+  - tensorflow
+  - tensorflow-probability
