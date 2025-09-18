@@ -1,3 +1,6 @@
 {
-  "last_version": "https://drive.google.com/drive/folders/1wG7W7kI4iO-N3V9yvZb9ZMh0ZlCjEUcl?usp=sharing"
+  "last_version": {
+    "huggingface": "https://huggingface.co/datasets/dest-ash/saved_predictions_for_bnn_14C_lib/resolve/main/last_version.zip",
+    "drive": "https://drive.google.com/drive/folders/1wG7W7kI4iO-N3V9yvZb9ZMh0ZlCjEUcl?usp=sharing"
+  }
 }

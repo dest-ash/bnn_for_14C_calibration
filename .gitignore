@@ -30,6 +30,7 @@ Thumbs.db
 # Données temporaires
 #*.csv
 *.tsv
+*.zip
 
 # Build / distribution
 build/

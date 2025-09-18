@@ -7,6 +7,7 @@ import time
 import json
 import re
 import gdown
+import zipfile
 import shutil
 
 
@@ -26,6 +27,18 @@ MODELS_DIR_LOCAL = CACHE_DIR / "models"
 # ========================================================================
 # fonctions de téléchargement des données et leur mise en cache
 # ========================================================================
+
+
+def clear_cache():
+    """
+    Supprime complètement le dossier cache de la librairie.
+    """
+    if CACHE_DIR.exists():
+        print(f"🗑️ removing cache directory at : {CACHE_DIR}")
+        shutil.rmtree(CACHE_DIR)
+        print(f"🗑️ cache removed!")
+    else:
+        print("ℹ️ No existing cache!")
 
 
 def is_google_drive_url(url: str) -> bool:
@@ -93,15 +106,45 @@ def download_from_google_drive(url_or_id: str, output_path: Path, sleep_time: fl
     output_path.parent.mkdir(parents=True, exist_ok=True)
     try:
         if "drive.google.com/drive/folders" in url_or_id:
-            print(f"Downloading Google Drive folder {url_or_id} → {output_path}")
+            print(f"📂 Downloading Google Drive folder {url_or_id} → {output_path}")
             gdown.download_folder(url_or_id, output=str(output_path), quiet=False)
         else:
             file_id = extract_drive_file_id(url_or_id) or url_or_id
-            print(f"Downloading Google Drive file id {file_id} → {output_path}")
+            print(f"📄 Downloading Google Drive file id {file_id} → {output_path}")
             gdown.download(id=file_id, output=str(output_path), quiet=False, fuzzy=True)
     except Exception as e:
-        print(f"    ❌ Google Drive error : {e}")
+        raise RuntimeError(f"Google Drive download failed for {output_path}: {e}")
     time.sleep(sleep_time)
+
+
+def download_from_huggingface(url: str, output_path: Path, timeout: int = 10, sleep_time: float = 0.2):
+    """
+    Download a file from Hugging Face Hub.
+    If the file is a .zip, it will be automatically extracted into output_path.
+    """
+    output_path.parent.mkdir(parents=True, exist_ok=True)
+    temp_file = output_path.with_suffix(".tmp")
+
+    print(f"⬇️ Downloading from Hugging Face: {url} → {output_path}")
+    try:
+        with requests.get(url, stream=True, timeout=timeout) as r:
+            r.raise_for_status()
+            with open(temp_file, "wb") as f:
+                for chunk in r.iter_content(chunk_size=8192):
+                    if chunk:
+                        f.write(chunk)
+        time.sleep(sleep_time)
+
+        # Dézippe automatiquement si c'est un zip
+        if str(url).endswith(".zip"):
+            print(f"📦 Extracting zip {temp_file} → {output_path}")
+            with zipfile.ZipFile(temp_file, "r") as zip_ref:
+                zip_ref.extractall(output_path)
+            temp_file.unlink()
+        else:
+            temp_file.rename(output_path)
+    except Exception as e:
+        raise RuntimeError(f"Hugging Face download failed for {output_path}: {e}")
 
 
 def download_github_with_drive_map(
@@ -112,38 +155,28 @@ def download_github_with_drive_map(
     sleep_time: float = 0.2
 ):
     """
-    Télécharge le contenu d'un dossier GitHub, en remplaçant certains fichiers
-    par leur équivalent Google Drive selon un fichier `drive_map.json` local
-    à chaque sous-dossier.
+    Download a GitHub folder while integrating external sources via drive_map.json.
 
-    Paramètres
+    Parameters
     ----------
     api_url : str
-        URL de l'API GitHub pour accéder au contenu du dossier.
-        Exemple : https://api.github.com/repos/username/repo/contents/path
-    local_dir : Path
-        Répertoire local où sauvegarder les fichiers téléchargés.
+        GitHub API URL pointing to the folder to download.
+        Example: https://api.github.com/repos/username/repo/contents/models
+    local_dir : pathlib.Path
+        Local directory where the contents will be downloaded.
     token : str, optional
-        Token d'authentification GitHub (nécessaire même pour certains repos publics si quotas dépassés).
-    timeout : float, optional (default=10)
-        Timeout en secondes pour chaque requête HTTP.
-    sleep_time : float, optional (default=0.2)
-        Temps en secondes à attendre entre les téléchargements pour éviter de saturer le serveur.
+        GitHub personal access token if needed (default None).
+    timeout : float, optional
+        Timeout in seconds for HTTP requests (default 10).
+    sleep_time : float, optional
+        Delay in seconds between downloads to avoid throttling (default 0.2).
 
-    Comportement
-    ------------
-    - Crée la structure de dossiers correspondante localement.
-    - Cherche un fichier `drive_map.json` dans chaque sous-dossier et télécharge les fichiers correspondants depuis Google Drive.
-    - Les autres fichiers GitHub sont téléchargés normalement.
-    - Les sous-dossiers sont parcourus récursivement.
-    - Ne gère pas Git LFS, car tous les fichiers volumineux suivis par Git LFS sont supposés être mapés dans Drive. Ceci permet 
-        de contourner les limites de bande passante en téléchargement inhérentes à Git LFS pour un compte gratuit.
-    
-    Exemple
-    -------
-    >>> api_url = "https://api.github.com/repos/monuser/monrepo/contents/data"
-    >>> download_github_with_drive_map(api_url, Path("local_data"))
+    Raises
+    ------
+    RuntimeError
+        If a file or folder cannot be downloaded from both Hugging Face and Google Drive.
     """
+
     headers = {"Authorization": f"token {token}"} if token else {}
 
     def get_default_branch(owner: str, repo: str) -> str:
@@ -197,7 +230,7 @@ def download_github_with_drive_map(
             i = parts.index("repos")
             owner, repo = parts[i+1], parts[i+2]
         except (ValueError, IndexError):
-            raise ValueError(f"Impossible d'extraire owner/repo depuis l'URL API GitHub : {api_url}")
+            raise ValueError(f"Cannot extract owner/repo from GitHub API URL: {api_url}")
 
         default_branch = get_default_branch(owner, repo)
 
@@ -205,20 +238,45 @@ def download_github_with_drive_map(
             relative_name = item["name"]
             local_path = local_dir / relative_name
 
-            # Cas Google Drive via drive_map.json
-            if relative_name in drive_map and is_google_drive_url(drive_map[relative_name]):
-                download_from_google_drive(
-                    drive_map[relative_name],
-                    local_path,
-                    sleep_time=sleep_time
-                )
-                continue  # ✅ éviter de re-télécharger depuis GitHub
+            # Gestion des fichiers et dossiers mappés via drive_map.json
+            if relative_name in drive_map:
+                mapped = drive_map[relative_name]
+                success = False
+
+                # Hugging Face first
+                if "huggingface" in mapped:
+                    try:
+                        download_from_huggingface(mapped["huggingface"], local_path,
+                                                  timeout=timeout, sleep_time=sleep_time)
+                        success = True
+                    except Exception as e_hf:
+                        print(f"⚠️ Hugging Face download failed for {relative_name}: {e_hf}")
+
+                # Google Drive fallback
+                if not success and "drive" in mapped:
+                    try:
+                        download_from_google_drive(mapped["drive"], local_path, sleep_time=sleep_time)
+                        success = True
+                    except Exception as e_drive:
+                        print(f"⚠️ Google Drive download failed for {relative_name}: {e_drive}")
+
+                if not success:
+                    # suppression du cache partiel éventuellement  téléchargé
+                    print("""
+                    ⚠️ Failed to download all the data to cache. Removing the created cache before raising a 
+                        RuntimeError with more details about the file or the folder that matters
+                    """)
+                    clear_cache()
+                    raise RuntimeError(f"❌ Failed to download {relative_name} from both Hugging Face and Google Drive")
+
+                # ✅ Already downloaded via external sources, skip GitHub
+                continue
 
             # Cas fichier GitHub classique
             if item["type"] == "file":
                 if relative_name in drive_map:
-                    # ✅ fichier déjà pris en charge via Google Drive
-                    print(f"Skipping GitHub file {relative_name}, handled via Google Drive")
+                    # ✅ fichier déjà pris en charge via Hugging Face ou Google Drive
+                    print(f"Skipping GitHub file {relative_name}, handled via Hugging Face or Google Drive")
                     continue
                 if item["name"] == "drive_map.json":
                     # déjà téléchargé ci-dessus
@@ -237,28 +295,14 @@ def download_github_with_drive_map(
             # Cas sous-dossier GitHub
             elif item["type"] == "dir":
                 if relative_name in drive_map:
-                    # ✅ dossier déjà pris en charge via Google Drive
-                    print(f"Skipping GitHub folder {relative_name}, handled via Google Drive")
+                    # ✅ dossier déjà pris en charge via Hugging Face ou Google Drive
+                    print(f"Skipping GitHub folder {relative_name}, handled via Hugging Face or Google Drive")
                     continue
                 subdir = local_dir / relative_name
                 _download_folder(item["url"], subdir)
 
     _download_folder(api_url, local_dir)
 
-
-
-
-
-def clear_cache():
-    """
-    Supprime complètement le dossier cache de la librairie.
-    """
-    if CACHE_DIR.exists():
-        print(f"🗑️ removing cache directory at : {CACHE_DIR}")
-        shutil.rmtree(CACHE_DIR)
-        print(f"🗑️ cache removed!")
-    else:
-        print("ℹ️ No existing cache!")
 
 
 
