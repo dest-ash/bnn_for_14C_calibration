@@ -4,6 +4,9 @@
 import requests
 from pathlib import Path
 import time
+import json
+import re
+import gdown
 import shutil
 
 
@@ -25,119 +28,194 @@ MODELS_DIR_LOCAL = CACHE_DIR / "models"
 # ========================================================================
 
 
-# téléchargement d'un dossier github
-def download_github_folder(
-    repo_api_url: str,
+def is_google_drive_url(url: str) -> bool:
+    """
+    Vérifie si une URL correspond à un fichier ou dossier Google Drive.
+    
+    Paramètres
+    ----------
+    url : str
+        L'URL à tester.
+
+    Retour
+    ------
+    bool
+        True si l'URL contient 'drive.google.com', False sinon.
+    """
+    return "drive.google.com" in url
+
+
+def extract_drive_file_id(url: str) -> str:
+    """
+    Extrait l'ID d'un fichier Google Drive à partir d'une URL publique.
+    
+    Paramètres
+    ----------
+    url : str
+        L'URL publique du fichier Google Drive.
+        Exemples :
+            - https://drive.google.com/file/d/FILE_ID/view?usp=sharing
+            - https://drive.google.com/open?id=FILE_ID
+
+    Retour
+    ------
+    str ou None
+        L'ID du fichier Google Drive, ou None si l'ID n'a pas pu être extrait.
+    """
+    m = re.search(r"/file/d/([^/]+)", url)
+    if m:
+        return m.group(1)
+    m2 = re.search(r"[?&]id=([^&]+)", url)
+    if m2:
+        return m2.group(1)
+    return None
+
+
+def download_from_google_drive(url_or_id: str, output_path: Path, sleep_time: float = 0.2):
+    """
+    Télécharge un fichier ou un dossier depuis Google Drive.
+    Si l'URL correspond à un dossier, utilise gdown.download_folder.
+
+    Paramètres
+    ----------
+    url_or_id : str
+        L'URL publique Google Drive ou l'ID du fichier/dossier.
+    output_path : Path
+        Le chemin local où sauvegarder le fichier ou dossier téléchargé.
+    sleep_time : float, optional (default=0.2)
+        Temps en secondes à attendre après chaque téléchargement pour limiter les requêtes.
+    
+    Comportement
+    ------------
+    - Crée les dossiers parents si nécessaire.
+    - Gère les erreurs d'accès et les affiche sans interrompre le script.
+    """
+    output_path.parent.mkdir(parents=True, exist_ok=True)
+    try:
+        if "drive.google.com/drive/folders" in url_or_id:
+            print(f"Downloading Google Drive folder {url_or_id} → {output_path}")
+            gdown.download_folder(url_or_id, output=str(output_path), quiet=False)
+        else:
+            file_id = extract_drive_file_id(url_or_id) or url_or_id
+            print(f"Downloading Google Drive file id {file_id} → {output_path}")
+            gdown.download(id=file_id, output=str(output_path), quiet=False, fuzzy=True)
+    except Exception as e:
+        print(f"    ❌ Erreur Google Drive : {e}")
+    time.sleep(sleep_time)
+
+
+def download_github_with_drive_map(
+    api_url: str,
     local_dir: Path,
     token: str = None,
-    retries: int = 3,
     timeout: float = 10,
     sleep_time: float = 0.2
 ):
     """
-    Télécharge un dossier GitHub (public ou privé) en gérant fichiers classiques et LFS.
-    Détecte automatiquement la branche par défaut et retente les fichiers LFS échoués.
+    Télécharge le contenu d'un dossier GitHub, en remplaçant certains fichiers
+    par leur équivalent Google Drive selon un fichier `drive_map.json` local
+    à chaque sous-dossier.
+
+    Paramètres
+    ----------
+    api_url : str
+        URL de l'API GitHub pour accéder au contenu du dossier.
+        Exemple : https://api.github.com/repos/username/repo/contents/path
+    local_dir : Path
+        Répertoire local où sauvegarder les fichiers téléchargés.
+    token : str, optional
+        Token d'authentification GitHub (nécessaire même pour certains repos publics si quotas dépassés).
+    timeout : float, optional (default=10)
+        Timeout en secondes pour chaque requête HTTP.
+    sleep_time : float, optional (default=0.2)
+        Temps en secondes à attendre entre les téléchargements pour éviter de saturer le serveur.
+
+    Comportement
+    ------------
+    - Crée la structure de dossiers correspondante localement.
+    - Cherche un fichier `drive_map.json` dans chaque sous-dossier et télécharge les fichiers correspondants depuis Google Drive.
+    - Les autres fichiers GitHub sont téléchargés normalement.
+    - Les sous-dossiers sont parcourus récursivement.
+    - Ne gère pas Git LFS, car tous les fichiers volumineux suivis par Git LFS sont supposés être mapés dans Drive. Ceci permet 
+        de contourner les limites de bande passante en téléchargement inhérentes à Git LFS pour un compte gratuit.
     
-    Parameters:
-    - repo_api_url: API URL du dossier (ex: https://api.github.com/repos/{owner}/{repo}/contents/{path})
-    - local_dir: chemin local où sauvegarder les fichiers
-    - token: optionnel, nécessaire pour repos privés ou pour éviter limites API
-    - retries: nombre de retentatives pour les fichiers LFS échoués
-    - timeout: délai maximal pour chaque requête HTTP
-    - sleep_time: délai entre chaque téléchargement pour éviter surcharge serveur
+    Exemple
+    -------
+    >>> api_url = "https://api.github.com/repos/monuser/monrepo/contents/data"
+    >>> download_github_with_drive_map(api_url, Path("local_data"))
     """
     headers = {"Authorization": f"token {token}"} if token else {}
 
-    # Déterminer la branche par défaut
-    parts = repo_api_url.split('/')
-    owner, repo = parts[3], parts[4]
-    repo_info_url = f"https://api.github.com/repos/{owner}/{repo}"
-    repo_info = requests.get(repo_info_url, headers=headers, timeout=timeout).json()
-    default_branch = repo_info.get("default_branch", "main")
+    def get_default_branch(owner: str, repo: str) -> str:
+        """
+        Récupère la branche par défaut du dépôt GitHub.
+        
+        Paramètres
+        ----------
+        owner : str
+            Nom du propriétaire du dépôt.
+        repo : str
+            Nom du dépôt.
+        
+        Retour
+        ------
+        str
+            Nom de la branche par défaut (ex: "main" ou "master").
+        """
+        repo_info_url = f"https://api.github.com/repos/{owner}/{repo}"
+        r_info = requests.get(repo_info_url, headers=headers, timeout=timeout)
+        r_info.raise_for_status()
+        return r_info.json().get("default_branch", "main")
 
-    failed_lfs_files = []
+    def _download_folder(api_url: str, local_dir: Path):
+        """
+        Fonction interne récursive pour télécharger un dossier GitHub
+        et remplacer les fichiers selon drive_map.json.
+        """
+        local_dir.mkdir(parents=True, exist_ok=True)
+        drive_map_path = local_dir / "drive_map.json"
+        drive_map = {}
+        if drive_map_path.exists():
+            with open(drive_map_path, "r", encoding="utf-8") as f:
+                drive_map = json.load(f)
 
-    def _download_folder(api_url, local_dir):
         response = requests.get(api_url, headers=headers, timeout=timeout)
         response.raise_for_status()
         items = response.json()
 
+        parts = api_url.split('/')
+        owner, repo = parts[3], parts[4]
+        default_branch = get_default_branch(owner, repo)
+
         for item in items:
+            relative_name = item["name"]
+            local_path = local_dir / relative_name
+
+            # Cas Google Drive selon drive_map.json
+            if relative_name in drive_map and is_google_drive_url(drive_map[relative_name]):
+                download_from_google_drive(drive_map[relative_name], local_path, sleep_time=sleep_time)
+                continue
+
+            # Cas fichier GitHub classique
             if item["type"] == "file":
                 file_url = item.get("download_url")
-                local_path = local_dir / item["name"]
-                local_path.parent.mkdir(parents=True, exist_ok=True)
-
                 if not file_url:
-                    print(f"Skipping {item['name']}, no download URL available")
+                    print(f"Skipping {item['name']}, no download URL")
                     continue
-
-                print(f"Downloading {file_url} → {local_path}")
+                print(f"Downloading GitHub file {file_url} → {local_path}")
+                local_path.parent.mkdir(parents=True, exist_ok=True)
                 r = requests.get(file_url, headers=headers, timeout=timeout)
                 r.raise_for_status()
-
-                if r.text.startswith("version https://git-lfs.github.com/spec/v1"):
-                    # Fichier LFS
-                    lines = r.text.splitlines()
-                    oid_line = next((l for l in lines if l.startswith("oid sha256:")), None)
-                    if oid_line:
-                        oid = oid_line.split("oid sha256:")[1]
-                        # URL brute correcte pour n'importe quelle branche
-                        lfs_url = f"https://github.com/{owner}/{repo}/raw/{default_branch}/{item['path']}"
-                        try:
-                            lfs_r = requests.get(lfs_url, headers=headers, timeout=timeout)
-                            if lfs_r.status_code in (403, 404):
-                                print(f"    ❌ LFS file {item['name']} unavailable (status {lfs_r.status_code}). Will retry later.")
-                                failed_lfs_files.append((lfs_url, local_path))
-                            else:
-                                lfs_r.raise_for_status()
-                                local_path.write_bytes(lfs_r.content)
-                        except requests.RequestException as e:
-                            print(f"    ❌ Cannot download LFS file {item['name']}: {e}")
-                            failed_lfs_files.append((lfs_url, local_path))
-                    else:
-                        print(f"    ❌ Invalid LFS pointer for {item['name']}, skipping.")
-                else:
-                    local_path.write_bytes(r.content)
-
+                local_path.write_bytes(r.content)
                 time.sleep(sleep_time)
 
+            # Cas sous-dossier
             elif item["type"] == "dir":
-                subdir = local_dir / item["name"]
-                subdir.mkdir(parents=True, exist_ok=True)
+                subdir = local_dir / relative_name
                 _download_folder(item["url"], subdir)
 
-    # Première passe
-    _download_folder(repo_api_url, local_dir)
+    _download_folder(api_url, local_dir)
 
-    # Retenter les fichiers LFS échoués
-    attempt = 1
-    while failed_lfs_files and attempt <= retries:
-        print(f"\nRetrying LFS files, attempt {attempt}/{retries}...")
-        remaining = []
-        for lfs_url, local_path in failed_lfs_files:
-            try:
-                lfs_r = requests.get(lfs_url, headers=headers, timeout=timeout)
-                if lfs_r.status_code in (403, 404):
-                    print(f"    ❌ Still unavailable: {local_path.name} (status {lfs_r.status_code})")
-                    remaining.append((lfs_url, local_path))
-                else:
-                    lfs_r.raise_for_status()
-                    local_path.write_bytes(lfs_r.content)
-                    print(f"    ✅ Downloaded {local_path.name}")
-            except requests.RequestException as e:
-                print(f"    ❌ Error downloading {local_path.name}: {e}")
-                remaining.append((lfs_url, local_path))
-            time.sleep(sleep_time)
-        failed_lfs_files = remaining
-        attempt += 1
-
-    if failed_lfs_files:
-        print("\n⚠️ Some LFS files could not be downloaded after retries:")
-        for _, local_path in failed_lfs_files:
-            print(f" - {local_path}")
-    else:
-        print("\n✅ All files downloaded successfully!")
 
 
 
@@ -168,10 +246,10 @@ def download_cache_lib_data(
         print(f"Creating cache directory at: {CACHE_DIR}")
         CACHE_DIR.mkdir(parents=True, exist_ok=True)
         MODELS_DIR_LOCAL.mkdir(exist_ok=True)
-        download_github_folder(MODELS_DIR_API_URL, MODELS_DIR_LOCAL)
+        download_github_with_drive_map(MODELS_DIR_API_URL, MODELS_DIR_LOCAL)
         print(f"""
-        ✅ Cache directory created at: {CACHE_DIR}, and filled with all 
-        the contents of the 'models' directory downloaded from GitHub.
+        ✅ Cache directory created at: {CACHE_DIR}, and filled with all the 
+        contents of the 'models' directory downloaded from GitHub and Google Drive.
         """)
     else :
         print(f"""
