@@ -12,6 +12,8 @@ ENV/
 conda_env_.yml
 conda_env.yml
 requirements-conda.txt
+environment_dev_creation.yml
+environment_dev.yml
 
 # Config d’éditeur
 *.dat
