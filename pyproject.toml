@@ -1,0 +1,66 @@
+[project]
+name = "bnn_for_14C_calibration"
+version = "0.0.1"
+description = "Bayesian Neural Networks methods for radiocarbon (14C) calibration"
+#readme = "README.md"
+#license = { file = "LICENSE" }
+authors = [
+    { name = "Destin ASHUZA CIRUMANGA", email = "destin.cirumanga@gmail.com" }
+]
+keywords = ["Bayesian Neural Network", "radiocarbon calibration", "14C"]
+classifiers = [
+    "Programming Language :: Python :: 3",
+    #"License :: OSI Approved :: MIT License",  # ou autre si ce n’est pas MIT
+    "Operating System :: OS Independent"
+]
+requires-python = ">=3.9"
+
+dependencies = [
+    "numpy>=1.23",
+    "matplotlib>=3.5",
+    "pandas>=1.4",
+    "gdown>=5.2",
+    "scikit-learn>=1.1",
+    "tensorflow>=2.9",
+    "tensorflow-probability>=0.17"
+]
+
+[project.urls]
+Homepage = "https://github.com/dest-ash/bnn_for_14C_calibration"
+Repository = "https://github.com/dest-ash/bnn_for_14C_calibration.git"
+
+[build-system]
+requires = ["setuptools>=61.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools]
+package-dir = {"" = "src"}
+include-package-data = true
+# packages = ["bnn_for_14C_calibration"]
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.setuptools.package-data]
+# dossier contenant les données embarquées inclus avec tous ses fichiers et sous dossiers
+bnn_for_14C_calibration = ["data/**"]
+
+# [tool.setuptools.scripts]
+# installer des scripts/executables ici
+# ex:
+# calibrate = "bnn_for_14C_calibration.cli:main"
+
+[project.optional-dependencies]
+notebook = ["jupyter"]
+# testing = [
+#     "pytest>=6.0",
+#     "pytest-cov",
+# ]
+# docs = [
+#     "sphinx",
+#     "furo",  # thème, si utilisé
+# ]
+
+# [tool.endpoints]
+# facultatif, si tu veux déclarer des points d’entrée
+
