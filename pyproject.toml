@@ -21,8 +21,9 @@ dependencies = [
     "pandas>=1.4",
     "gdown>=5.2",
     "scikit-learn>=1.1",
-    "tensorflow>=2.9",
-    "tensorflow-probability>=0.17"
+    "tensorflow>=2.9,<2.16",
+    #"tensorflow-probability[tf]>=0.17"
+    "tensorflow-probability>=0.17,<0.24"
 ]
 
 [project.urls]
