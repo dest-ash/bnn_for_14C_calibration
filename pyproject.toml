@@ -13,17 +13,31 @@ classifiers = [
     #"License :: OSI Approved :: MIT License",  # ou autre si ce n’est pas MIT
     "Operating System :: OS Independent"
 ]
-requires-python = ">=3.9"
+
+# requires-python = ">=3.9"
+# 
+# dependencies = [
+#     "numpy>=1.23", #1.26.4 
+#     "matplotlib>=3.5", #3.9.4
+#     "pandas>=1.4", #2.3.2
+#     "gdown>=5.2", #5.2.0
+#     "scikit-learn>=1.1", #1.6.1
+#     "tensorflow>=2.9,<2.16", #2.15.1 #keras==2.15.0
+#     #"tensorflow-probability[tf]>=0.17"
+#     "tensorflow-probability>=0.17,<0.24" #0.23.0
+# ]
+
+requires-python = "==3.9.13"
 
 dependencies = [
-    "numpy>=1.23",
-    "matplotlib>=3.5",
-    "pandas>=1.4",
-    "gdown>=5.2",
-    "scikit-learn>=1.1",
-    "tensorflow>=2.9,<2.16",
-    #"tensorflow-probability[tf]>=0.17"
-    "tensorflow-probability>=0.17,<0.24"
+    "numpy==1.23.2",
+    "matplotlib==3.5.3",
+    "pandas==1.4.4",
+    "gdown==5.2.0",
+    "scikit-learn==1.1.2",
+    "tensorflow==2.9.1",
+    #"keras==2.9.0",
+    "tensorflow-probability==0.17.0"
 ]
 
 [project.urls]
