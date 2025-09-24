@@ -1,7 +1,8 @@
-numpy
-matplotlib
-pandas
-gdown
-scikit-learn
-tensorflow
-tensorflow-probability
+python==3.9.13
+numpy==1.23.2
+matplotlib==3.5.3
+pandas==1.4.4
+gdown==5.2.0
+scikit-learn==1.1.2
+tensorflow==2.9.1
+tensorflow-probability==0.17.0

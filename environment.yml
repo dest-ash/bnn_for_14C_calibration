@@ -3,11 +3,11 @@ channels:
   - conda-forge
   - defaults
 dependencies:
-  - python=3.9
-  - numpy
-  - matplotlib
-  - pandas
-  - gdown
-  - scikit-learn
-  - tensorflow
-  - tensorflow-probability
+  - python=3.9.13
+  - numpy=1.23.2
+  - matplotlib=
+  - pandas=
+  - gdown=
+  - scikit-learn=
+  - tensorflow=
+  - tensorflow-probability=
