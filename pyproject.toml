@@ -3,7 +3,7 @@ name = "bnn_for_14C_calibration"
 version = "0.0.1"
 description = "Bayesian Neural Networks methods for radiocarbon (14C) calibration"
 #readme = "README.md"
-#license = { file = "LICENSE" }
+license = { file = "COPYING" }
 authors = [
     { name = "Destin ASHUZA CIRUMANGA", email = "destin.cirumanga@gmail.com" }
 ]
