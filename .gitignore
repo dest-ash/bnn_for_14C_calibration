@@ -17,6 +17,8 @@ environment_dev_creation.yml
 environment_dev.yml
 environment_prod_creation.yml
 environment_prod.yml
+environment_user_creation.yml
+environment_user.yml
 
 # Config d’éditeur
 *.dat
