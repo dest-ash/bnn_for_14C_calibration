@@ -79,3 +79,15 @@ notebook = ["jupyter"]
 # [tool.endpoints]
 # facultatif, si tu veux déclarer des points d’entrée
 
+[tool.bumpver]
+current_version = "0.0.1"
+version_pattern = "MAJOR.MINOR.PATCH"
+commit_message = "Bump version {old_version} → {new_version}"
+tag_message = "Release {new_version}"
+tag_name = "v{new_version}"
+push = true
+
+
+[tool.bumpver.file_patterns]
+"pyproject.toml" = ['version = "{version}"']
+"src/bnn_for_14C_calibration/__init__.py" = ['__version__ = "{version}"']

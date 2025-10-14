@@ -1,3 +1,7 @@
+# version de la librairie
+__version__ = "0.0.1"
+
+
 # fonctions de calibration :
 #     - individuelle
 #     - jointe

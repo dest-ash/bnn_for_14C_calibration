@@ -60,3 +60,6 @@ htmlcov/
 *.env
 .envrc
 
+
+# automatisation des build
+release.sh
