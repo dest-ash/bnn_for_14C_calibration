@@ -83,6 +83,7 @@ notebook = ["jupyter"]
 current_version = "0.0.1"
 version_pattern = "MAJOR.MINOR.PATCH"
 commit_message = "Bump version {old_version} → {new_version}"
+commit = true
 tag_message = "Release {new_version}"
 tag_name = "v{new_version}"
 push = true
