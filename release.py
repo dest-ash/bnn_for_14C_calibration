@@ -20,13 +20,13 @@ def main(bump_type="patch", dry=False, test=False):
     if ask_confirmation("🧹 Clean previous builds?"):
         run("rm -rf dist/ build/ *.egg-info", dry)
 
-    # 2️⃣ Build
-    if ask_confirmation("📦 Build package?"):
-        run("python -m build", dry)
-
-    # 3️⃣ Bump version
+    # 2️⃣ Bump version
     if ask_confirmation(f"🔢 Bump version ({bump_type})?"):
         run(f"bumpver update --{bump_type}", dry)
+
+    # 3️⃣ Build
+    if ask_confirmation("📦 Build package?"):
+        run("python -m build", dry)
 
     # 4️⃣ Push Git
     if ask_confirmation("🚀 Push commit and tag to GitHub?"):
