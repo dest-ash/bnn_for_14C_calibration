@@ -14,7 +14,7 @@ def ask_confirmation(prompt):
     return reply == "y"
 
 def main(bump_type="patch", dry=False, test=False):
-    print("🚀 Secure Release Script for ma_librairie\n")
+    print("🚀 Secure Release Script for bnn_for_14C_calibration\n")
 
     # 1️⃣ Nettoyage
     if ask_confirmation("🧹 Clean previous builds?"):
@@ -33,7 +33,20 @@ def main(bump_type="patch", dry=False, test=False):
         run("git push && git push --tags", dry)
 
     # 5️⃣ Création Release GitHub
-    tag = subprocess.check_output("git describe --tags --abbrev=0", shell=True).decode().strip()
+    try:
+        tag = subprocess.check_output("git describe --tags --abbrev=0", shell=True).decode().strip()
+    except subprocess.CalledProcessError:
+        print("⚠️ No existing Git tag found.")
+        print("   Attempting to detect the new one created by bumpver...")
+        try:
+            # Essaye de trouver le dernier commit tagué (si bumpver vient d'en créer un)
+            tag = subprocess.check_output("git describe --tags", shell=True).decode().strip()
+        except subprocess.CalledProcessError:
+            # En dernier recours, on récupère le hash du dernier commit
+            tag = subprocess.check_output("git rev-parse --short HEAD", shell=True).decode().strip()
+            print(f"⚠️ Using commit hash instead of tag: {tag}")
+
+    # Confirmation avant création de la release
     if ask_confirmation(f"🏷️ Create GitHub release for {tag}?"):
         run(f'gh release create {tag} dist/* --title "Release {tag}" --notes "Automated release."', dry)
 
