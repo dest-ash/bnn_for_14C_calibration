@@ -22,7 +22,12 @@ def main(bump_type="patch", dry=False, test=False):
 
     # 2️⃣ Bump version
     if ask_confirmation(f"🔢 Bump version ({bump_type})?"):
-        run(f"bumpver update --{bump_type}", dry)
+        if dry :
+            # on applique l'effet de dry exact pour simuler le changement de version
+            run(f"bumpver update --{bump_type} --dry", not dry)
+        else :
+            # sinon, on exécute la vraie mise de version
+            run(f"bumpver update --{bump_type}", dry)
 
     # 3️⃣ Build
     if ask_confirmation("📦 Build package?"):
