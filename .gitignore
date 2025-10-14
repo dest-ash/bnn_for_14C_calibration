@@ -12,7 +12,9 @@ ENV/
 0_conda_env_cheatsheet.txt
 conda_env_.yml
 conda_env.yml
+requirements.txt
 requirements-conda.txt
+environment.yml
 environment_dev_creation.yml
 environment_dev.yml
 environment_prod_creation.yml
