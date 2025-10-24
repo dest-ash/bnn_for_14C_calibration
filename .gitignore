@@ -9,7 +9,6 @@ venv/
 env/
 ENV/
 .conda/
-0_conda_env_cheatsheet.txt
 conda_env_.yml
 conda_env.yml
 requirements.txt
@@ -63,3 +62,8 @@ htmlcov/
 
 # automatisation des build
 release.sh
+
+
+# autres fichiers
+mkdocs_cheatsheet.md
+0_conda_env_cheatsheet.txt
