@@ -48,3 +48,10 @@ markdown_extensions:
 extra_javascript:
   - https://polyfill.io/v3/polyfill.min.js?features=es6
   - https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js
+
+
+# reload automatique à chaque modification des docstrings dans les fichiers .py
+# ou des pages markdowns (modification des fichiers .md)
+watch:
+  - src
+  - docs
