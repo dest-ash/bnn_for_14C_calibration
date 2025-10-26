@@ -29,9 +29,9 @@ nav:
       - Other functions (internals):
         - General lib utilities functions: reference/utils.md
         - Bayesian modeling functions:
-          - Utilities functions: reference/bnn_models_built_in_utils
-          - Built in models: reference/bnn_models_built_in
-          - Utilities functions for calibration: reference/calibration_utils
+          - Utilities functions: reference/bnn_models_built_in_utils.md
+          - Built in models: reference/bnn_models_built_in.md
+          - Utilities functions for calibration: reference/calibration_utils.md
 
 
 # gestion équations math
