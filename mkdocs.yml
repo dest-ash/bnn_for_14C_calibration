@@ -22,16 +22,16 @@ plugins:
 
 nav:
   - Installation and quick start: index.md
-  - Description of lib functions:
+  - User Guide:
       - Calibration functions: reference/calibration.md
       - Plotting functions: reference/calib_plot_functions.md
       - Local cache management functions: reference/manage_cache.md
-      - Other functions (internals):
-        - General lib utilities functions: reference/utils.md
-        - Bayesian modeling functions:
-          - Utilities functions: reference/bnn_models_built_in_utils.md
-          - Built in models: reference/bnn_models_built_in.md
-          - Utilities functions for calibration: reference/calibration_utils.md
+  - Internals:
+    - General lib utilities functions: reference/utils.md
+    - Bayesian modeling functions:
+      - Utilities functions: reference/bnn_models_built_in_utils.md
+      - Built in models: reference/bnn_models_built_in.md
+      - Utilities functions for calibration: reference/calibration_utils.md
 
 
 # gestion équations math
