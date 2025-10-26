@@ -41,6 +41,14 @@ from .calibration_utils import (
 
 from scipy.optimize import minimize
 
+
+__all__ = [
+    # fonctions de calibration
+    "individual_calibration", 
+    "IntCal20_calibration", 
+    "joint_calibration"
+]
+
 # ========================================================================
 # génération des chemins vers le cache local ou 
 # les données embarquées dans le package
@@ -506,7 +514,7 @@ def concatenate_curves_parts(
     covariables=False
 ):
     """
-    concatenate the first and second parts of the calibration curve by puting together
+    concatenate the first and second parts of the calibration curve by putting together
     midpoints predictions and generating quantities (Min and Max from training step) 
     for scaling data as needed for differents algorithms and models.
     """

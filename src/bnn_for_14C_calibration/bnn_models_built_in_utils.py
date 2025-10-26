@@ -11,7 +11,12 @@ from .utils import (
     load_data
 )
     
-
+__all__ = [
+    "gaussian_prior",
+    "independent_gaussian_posterior",
+    "bnn_make_predictions_",
+    "bnn_load_predictions_"
+]
 
 # ========================================================================
 # lois a priori et a posteriori

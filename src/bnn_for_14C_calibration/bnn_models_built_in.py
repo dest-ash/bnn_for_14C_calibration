@@ -24,6 +24,16 @@ from .utils import (
 )
 
 
+__all__ = [
+    "bnn_reg_model",
+    "bnn_load_model_part_1",
+    "bnn_load_model_part_2",
+    "spline_regressor_built_in",
+    "create_and_fit_Be10_curve",
+    "create_and_fit_PaleoIntensity_curve",
+    "create_features"
+]
+
 # ========================================================================
 # génération des chemins vers le cache local ou 
 # les données embarquées dans le package

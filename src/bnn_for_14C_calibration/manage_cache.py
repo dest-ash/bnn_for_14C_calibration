@@ -11,6 +11,13 @@ import zipfile
 import shutil
 
 
+# fonctions publiques
+__all__ = [
+    # fonctions de gestion du cache local
+    "download_cache_lib_data",
+    "clear_cache"
+]
+
 # ========================================================================
 # définition des chemins constants vers le cache local 
 # ========================================================================
@@ -363,6 +370,7 @@ def download_cache_lib_data(
             An existing cache directory is located at {CACHE_DIR}  and overwrite is {overwrite}.
             If you wish to force the cache download, set overwrite to True.
         """)
+
 
 if __name__ == "__main__":
     download_cache_lib_data()
