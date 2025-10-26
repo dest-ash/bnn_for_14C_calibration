@@ -12,8 +12,18 @@ plugins:
       handlers:
         python:
           paths: ["src"]
+          options:
+            show_root_heading: false
 
 nav:
   - Installation and quick start: index.md
   - Description of lib functions:
-      - bnn_for_14C_calibration: reference/bnn_for_14C_calibration.md
+      - Calibration functions: reference/calibration.md
+      - Plotting functions: reference/calib_plot_functions.md
+      - Local cache management functions: reference/manage_cache.md
+      - Other (internal) functions:
+        - General lib utilities functions: reference/utils.md
+        - Bayesian modeling functions:
+          - Utilities functions: reference/bnn_models_built_in_utils
+          - Built in models: reference/bnn_models_built_in
+          - Utilities functions for calibration: reference/calibration_utils
