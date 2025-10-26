@@ -9,3 +9,4 @@ Description of the calibration functions implemented in the Python library `bnn_
     options:
       show_root_heading: false
       show_root_toc_entry: false
+      show_if_no_docstring: true

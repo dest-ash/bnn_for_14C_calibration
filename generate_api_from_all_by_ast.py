@@ -103,6 +103,7 @@ def main():
         md_lines.append("    options:\n")
         md_lines.append("      show_root_heading: false\n")
         md_lines.append("      show_root_toc_entry: false\n")
+        md_lines.append("      show_if_no_docstring: true\n")
 
         out_file = OUT_DIR / f"{shortname}.md"
         out_file.write_text("".join(md_lines), encoding="utf8")

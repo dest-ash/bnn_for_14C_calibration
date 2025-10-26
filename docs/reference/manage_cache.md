@@ -8,3 +8,4 @@ Description of the functions implemented to store and manage lib data in a local
     options:
       show_root_heading: false
       show_root_toc_entry: false
+      show_if_no_docstring: true

@@ -13,3 +13,4 @@ Description of built in functions for Baysian modelling:
     options:
       show_root_heading: false
       show_root_toc_entry: false
+      show_if_no_docstring: true

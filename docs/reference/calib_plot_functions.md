@@ -11,3 +11,4 @@ Description of plotting functions:
     options:
       show_root_heading: false
       show_root_toc_entry: false
+      show_if_no_docstring: true
