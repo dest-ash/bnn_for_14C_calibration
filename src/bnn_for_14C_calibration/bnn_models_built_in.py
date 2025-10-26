@@ -24,16 +24,6 @@ from .utils import (
 )
 
 
-__all__ = [
-    "bnn_reg_model",
-    "bnn_load_model_part_1",
-    "bnn_load_model_part_2",
-    "spline_regressor_built_in",
-    "create_and_fit_Be10_curve",
-    "create_and_fit_PaleoIntensity_curve",
-    "create_features"
-]
-
 # ========================================================================
 # génération des chemins vers le cache local ou 
 # les données embarquées dans le package
@@ -648,3 +638,13 @@ def create_features(
     return X_train_with_covariables, X_val_with_covariables, X_test_with_covariables, covariables_max_values_from_training_stage, covariables_min_values_from_training_stage
 
 
+
+__all__ = [
+    "bnn_reg_model",
+    "bnn_load_model_part_1",
+    "bnn_load_model_part_2",
+    "spline_regressor_built_in",
+    "create_and_fit_Be10_curve",
+    "create_and_fit_PaleoIntensity_curve",
+    "create_features"
+]

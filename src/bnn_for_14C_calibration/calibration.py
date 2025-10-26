@@ -42,13 +42,6 @@ from .calibration_utils import (
 from scipy.optimize import minimize
 
 
-__all__ = [
-    # fonctions de calibration
-    "individual_calibration", 
-    "IntCal20_calibration", 
-    "joint_calibration"
-]
-
 # ========================================================================
 # génération des chemins vers le cache local ou 
 # les données embarquées dans le package
@@ -1134,3 +1127,11 @@ def joint_calibration(
     
     return results
 
+
+
+__all__ = [
+    # fonctions de calibration
+    "individual_calibration", 
+    "IntCal20_calibration", 
+    "joint_calibration"
+]

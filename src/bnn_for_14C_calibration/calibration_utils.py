@@ -3,20 +3,6 @@
 
 import numpy as np
 
-__all__ = [
-    "mono_cal_date_approx_density",
-    "_mono_cal_date_approx_density_on_middle_points_",
-    "multi_cal_date_approx_density",
-    "_multi_cal_date_approx_density_",
-    "mono_cal_date_approx_density_sample",
-    "mono_cal_date_approx_cumulative_fct",
-    "mono_cal_date_approx_vect_cumulative_fct",
-    "mono_cal_date_discrete_approx_quantile_fct",
-    "optimise_credible_interval",
-    "compute_HPD_regions"
-
-]
-
 # =============================================================================
 # approximation de la densité a posteriori des dates calibrées
 # =============================================================================
@@ -612,3 +598,16 @@ def compute_HPD_regions(alpha, density=None, nb_intervals=1000, support_bounds=(
 
 
 
+__all__ = [
+    "mono_cal_date_approx_density",
+    "_mono_cal_date_approx_density_on_middle_points_",
+    "multi_cal_date_approx_density",
+    "_multi_cal_date_approx_density_",
+    "mono_cal_date_approx_density_sample",
+    "mono_cal_date_approx_cumulative_fct",
+    "mono_cal_date_approx_vect_cumulative_fct",
+    "mono_cal_date_discrete_approx_quantile_fct",
+    "optimise_credible_interval",
+    "compute_HPD_regions"
+
+]

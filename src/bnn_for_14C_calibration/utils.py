@@ -13,30 +13,6 @@ from .manage_cache import(
 )
 
 
-__all__ = [
-    "get_lib_data_paths",
-    "load_data",
-    "minimax_scaling",
-    "minimax_scaling_reciproque",
-    "d14c_to_f14c",
-    "d14csig_to_f14csig",
-    "f14c_to_d14c",
-    "f14csig_to_d14csig",
-    "f14c_to_c14",
-    "f14csig_to_c14sig",
-    "c14_to_f14c",
-    "c14sig_to_f14csig",
-    "d14c_to_c14",
-    "d14csig_to_c14sig",
-    "c14_to_d14c",
-    "c14sig_to_d14csig",
-    "ajoute_segment_vertical",
-    "ajoute_segment_horizontal",
-    "bp_to_calendar",
-    "calendar_to_bp"
-]
-
-
 
 def get_lib_data_paths():
     """
@@ -374,3 +350,27 @@ def calendar_to_bp(year, era):
     else:
         raise ValueError("L'ère doit être 'BCE' ou 'CE'.")
 
+
+
+__all__ = [
+    "get_lib_data_paths",
+    "load_data",
+    "minimax_scaling",
+    "minimax_scaling_reciproque",
+    "d14c_to_f14c",
+    "d14csig_to_f14csig",
+    "f14c_to_d14c",
+    "f14csig_to_d14csig",
+    "f14c_to_c14",
+    "f14csig_to_c14sig",
+    "c14_to_f14c",
+    "c14sig_to_f14csig",
+    "d14c_to_c14",
+    "d14csig_to_c14sig",
+    "c14_to_d14c",
+    "c14sig_to_d14csig",
+    "ajoute_segment_vertical",
+    "ajoute_segment_horizontal",
+    "bp_to_calendar",
+    "calendar_to_bp"
+]

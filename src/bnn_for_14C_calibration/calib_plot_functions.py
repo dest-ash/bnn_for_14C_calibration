@@ -25,15 +25,6 @@ from .calibration import (
 )
 
 
-__all__ = [
-    # fonctions d'affichage
-    "plot_calib_results", 
-    "plot_individual_calibration_curve_part_1", 
-    "plot_individual_calibration_curve_part_2", 
-    "plot_bnn_calibration_curve", 
-    "plot_IntCal20_curve"
-]
-
 # ========================================================================
 # génération des chemins vers le cache local ou 
 # les données embarquées dans le package
@@ -1272,3 +1263,13 @@ def plot_calib_results(
     )
     plt.show()
 
+
+
+__all__ = [
+    # fonctions d'affichage
+    "plot_calib_results", 
+    "plot_individual_calibration_curve_part_1", 
+    "plot_individual_calibration_curve_part_2", 
+    "plot_bnn_calibration_curve", 
+    "plot_IntCal20_curve"
+]
