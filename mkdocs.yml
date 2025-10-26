@@ -11,9 +11,14 @@ plugins:
   - mkdocstrings:
       handlers:
         python:
-          paths: ["src"]
           options:
+            paths: ["src"]
             show_root_heading: false
+            show_root_toc_entry: false
+            docstring_style: numpy
+            show_signature: true
+            separate_signature: true
+            merge_init_into_class: true
 
 nav:
   - Installation and quick start: index.md
@@ -21,9 +26,25 @@ nav:
       - Calibration functions: reference/calibration.md
       - Plotting functions: reference/calib_plot_functions.md
       - Local cache management functions: reference/manage_cache.md
-      - Other (internal) functions:
+      - Other functions (internals):
         - General lib utilities functions: reference/utils.md
         - Bayesian modeling functions:
           - Utilities functions: reference/bnn_models_built_in_utils
           - Built in models: reference/bnn_models_built_in
           - Utilities functions for calibration: reference/calibration_utils
+
+
+# gestion équations math
+markdown_extensions:
+  - admonition
+  - toc:
+      permalink: true
+  - pymdownx.arithmatex:
+      generic: true
+  - pymdownx.superfences
+  - pymdownx.details
+  - pymdownx.highlight
+
+extra_javascript:
+  - https://polyfill.io/v3/polyfill.min.js?features=es6
+  - https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js
