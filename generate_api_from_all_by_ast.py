@@ -11,7 +11,7 @@ OUT_DIR.mkdir(parents=True, exist_ok=True)
 for p in PKG_DIR.glob("*.py"):
     if p.name == "__init__.py":
         continue
-    modname = f"bnn_module.{p.stem}"
+    modname = f"bnn_for_14C_calibration.{p.stem}"
     src = p.read_text()
     tree = ast.parse(src)
 
