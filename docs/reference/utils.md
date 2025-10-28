@@ -1,29 +1,202 @@
 # utils
 Description of general utilities functions: 
-::: bnn_for_14C_calibration.utils
-    selection:
-      members:
-        - get_lib_data_paths
-        - load_data
-        - minimax_scaling
-        - minimax_scaling_reciproque
-        - d14c_to_f14c
-        - d14csig_to_f14csig
-        - f14c_to_d14c
-        - f14csig_to_d14csig
-        - f14c_to_c14
-        - f14csig_to_c14sig
-        - c14_to_f14c
-        - c14sig_to_f14csig
-        - d14c_to_c14
-        - d14csig_to_c14sig
-        - c14_to_d14c
-        - c14sig_to_d14csig
-        - ajoute_segment_vertical
-        - ajoute_segment_horizontal
-        - bp_to_calendar
-        - calendar_to_bp
+::: bnn_for_14C_calibration.utils.get_lib_data_paths
     options:
-      show_root_heading: false
+      show_root_heading: true
       show_root_toc_entry: false
       show_if_no_docstring: true
+      show_signature: true
+      separate_signature: false
+      show_source: true
+      resolve_aliases: false
+      show_submodules: false
+::: bnn_for_14C_calibration.utils.load_data
+    options:
+      show_root_heading: true
+      show_root_toc_entry: false
+      show_if_no_docstring: true
+      show_signature: true
+      separate_signature: false
+      show_source: true
+      resolve_aliases: false
+      show_submodules: false
+::: bnn_for_14C_calibration.utils.minimax_scaling
+    options:
+      show_root_heading: true
+      show_root_toc_entry: false
+      show_if_no_docstring: true
+      show_signature: true
+      separate_signature: false
+      show_source: true
+      resolve_aliases: false
+      show_submodules: false
+::: bnn_for_14C_calibration.utils.minimax_scaling_reciproque
+    options:
+      show_root_heading: true
+      show_root_toc_entry: false
+      show_if_no_docstring: true
+      show_signature: true
+      separate_signature: false
+      show_source: true
+      resolve_aliases: false
+      show_submodules: false
+::: bnn_for_14C_calibration.utils.d14c_to_f14c
+    options:
+      show_root_heading: true
+      show_root_toc_entry: false
+      show_if_no_docstring: true
+      show_signature: true
+      separate_signature: false
+      show_source: true
+      resolve_aliases: false
+      show_submodules: false
+::: bnn_for_14C_calibration.utils.d14csig_to_f14csig
+    options:
+      show_root_heading: true
+      show_root_toc_entry: false
+      show_if_no_docstring: true
+      show_signature: true
+      separate_signature: false
+      show_source: true
+      resolve_aliases: false
+      show_submodules: false
+::: bnn_for_14C_calibration.utils.f14c_to_d14c
+    options:
+      show_root_heading: true
+      show_root_toc_entry: false
+      show_if_no_docstring: true
+      show_signature: true
+      separate_signature: false
+      show_source: true
+      resolve_aliases: false
+      show_submodules: false
+::: bnn_for_14C_calibration.utils.f14csig_to_d14csig
+    options:
+      show_root_heading: true
+      show_root_toc_entry: false
+      show_if_no_docstring: true
+      show_signature: true
+      separate_signature: false
+      show_source: true
+      resolve_aliases: false
+      show_submodules: false
+::: bnn_for_14C_calibration.utils.f14c_to_c14
+    options:
+      show_root_heading: true
+      show_root_toc_entry: false
+      show_if_no_docstring: true
+      show_signature: true
+      separate_signature: false
+      show_source: true
+      resolve_aliases: false
+      show_submodules: false
+::: bnn_for_14C_calibration.utils.f14csig_to_c14sig
+    options:
+      show_root_heading: true
+      show_root_toc_entry: false
+      show_if_no_docstring: true
+      show_signature: true
+      separate_signature: false
+      show_source: true
+      resolve_aliases: false
+      show_submodules: false
+::: bnn_for_14C_calibration.utils.c14_to_f14c
+    options:
+      show_root_heading: true
+      show_root_toc_entry: false
+      show_if_no_docstring: true
+      show_signature: true
+      separate_signature: false
+      show_source: true
+      resolve_aliases: false
+      show_submodules: false
+::: bnn_for_14C_calibration.utils.c14sig_to_f14csig
+    options:
+      show_root_heading: true
+      show_root_toc_entry: false
+      show_if_no_docstring: true
+      show_signature: true
+      separate_signature: false
+      show_source: true
+      resolve_aliases: false
+      show_submodules: false
+::: bnn_for_14C_calibration.utils.d14c_to_c14
+    options:
+      show_root_heading: true
+      show_root_toc_entry: false
+      show_if_no_docstring: true
+      show_signature: true
+      separate_signature: false
+      show_source: true
+      resolve_aliases: false
+      show_submodules: false
+::: bnn_for_14C_calibration.utils.d14csig_to_c14sig
+    options:
+      show_root_heading: true
+      show_root_toc_entry: false
+      show_if_no_docstring: true
+      show_signature: true
+      separate_signature: false
+      show_source: true
+      resolve_aliases: false
+      show_submodules: false
+::: bnn_for_14C_calibration.utils.c14_to_d14c
+    options:
+      show_root_heading: true
+      show_root_toc_entry: false
+      show_if_no_docstring: true
+      show_signature: true
+      separate_signature: false
+      show_source: true
+      resolve_aliases: false
+      show_submodules: false
+::: bnn_for_14C_calibration.utils.c14sig_to_d14csig
+    options:
+      show_root_heading: true
+      show_root_toc_entry: false
+      show_if_no_docstring: true
+      show_signature: true
+      separate_signature: false
+      show_source: true
+      resolve_aliases: false
+      show_submodules: false
+::: bnn_for_14C_calibration.utils.ajoute_segment_vertical
+    options:
+      show_root_heading: true
+      show_root_toc_entry: false
+      show_if_no_docstring: true
+      show_signature: true
+      separate_signature: false
+      show_source: true
+      resolve_aliases: false
+      show_submodules: false
+::: bnn_for_14C_calibration.utils.ajoute_segment_horizontal
+    options:
+      show_root_heading: true
+      show_root_toc_entry: false
+      show_if_no_docstring: true
+      show_signature: true
+      separate_signature: false
+      show_source: true
+      resolve_aliases: false
+      show_submodules: false
+::: bnn_for_14C_calibration.utils.bp_to_calendar
+    options:
+      show_root_heading: true
+      show_root_toc_entry: false
+      show_if_no_docstring: true
+      show_signature: true
+      separate_signature: false
+      show_source: true
+      resolve_aliases: false
+      show_submodules: false
+::: bnn_for_14C_calibration.utils.calendar_to_bp
+    options:
+      show_root_heading: true
+      show_root_toc_entry: false
+      show_if_no_docstring: true
+      show_signature: true
+      separate_signature: false
+      show_source: true
+      resolve_aliases: false
+      show_submodules: false

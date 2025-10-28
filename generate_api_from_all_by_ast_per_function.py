@@ -29,6 +29,20 @@ MODULE_DESCRIPTIONS = {
     "manage_cache": "Description of the functions implemented to store and manage lib data in a local cache on the disk: ",
     "utils": "Description of general utilities functions: ",
 }
+
+
+# options to write in each block (indentation EXACT)
+DEFAULT_OPTIONS = [
+    "    options:",
+    "      show_root_heading: true",
+    "      show_root_toc_entry: false",
+    "      show_if_no_docstring: true",
+    "      show_signature: true",
+    "      separate_signature: false",
+    "      show_source: true",
+    "      resolve_aliases: false",
+    "      show_submodules: false",
+]
 # --------------------------------------------------------------
 
 def load_descriptions():
@@ -97,10 +111,12 @@ def main():
             md_lines.append(f"{desc}\n")
         for n in names:
             md_lines.append(f"::: {modname}.{n}\n")
-            md_lines.append("    options:\n")
-            md_lines.append("      show_root_heading: false\n")
-            md_lines.append("      show_root_toc_entry: false\n")
-            md_lines.append("      show_if_no_docstring: true\n")
+            # md_lines.append("    options:\n")
+            # md_lines.append("      show_root_heading: false\n")
+            # md_lines.append("      show_root_toc_entry: false\n")
+            # md_lines.append("      show_if_no_docstring: true\n")
+            for line in DEFAULT_OPTIONS:
+                md_lines.append(f"{line}\n")
 
         out_file = OUT_DIR / f"{shortname}.md"
         out_file.write_text("".join(md_lines), encoding="utf8")

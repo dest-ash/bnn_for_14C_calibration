@@ -1,13 +1,42 @@
 # bnn_models_built_in_utils
 Description of the utilities functions for Bayesian modeling: 
-::: bnn_for_14C_calibration.bnn_models_built_in_utils
-    selection:
-      members:
-        - gaussian_prior
-        - independent_gaussian_posterior
-        - bnn_make_predictions_
-        - bnn_load_predictions_
+::: bnn_for_14C_calibration.bnn_models_built_in_utils.gaussian_prior
     options:
-      show_root_heading: false
+      show_root_heading: true
       show_root_toc_entry: false
       show_if_no_docstring: true
+      show_signature: true
+      separate_signature: false
+      show_source: true
+      resolve_aliases: false
+      show_submodules: false
+::: bnn_for_14C_calibration.bnn_models_built_in_utils.independent_gaussian_posterior
+    options:
+      show_root_heading: true
+      show_root_toc_entry: false
+      show_if_no_docstring: true
+      show_signature: true
+      separate_signature: false
+      show_source: true
+      resolve_aliases: false
+      show_submodules: false
+::: bnn_for_14C_calibration.bnn_models_built_in_utils.bnn_make_predictions_
+    options:
+      show_root_heading: true
+      show_root_toc_entry: false
+      show_if_no_docstring: true
+      show_signature: true
+      separate_signature: false
+      show_source: true
+      resolve_aliases: false
+      show_submodules: false
+::: bnn_for_14C_calibration.bnn_models_built_in_utils.bnn_load_predictions_
+    options:
+      show_root_heading: true
+      show_root_toc_entry: false
+      show_if_no_docstring: true
+      show_signature: true
+      separate_signature: false
+      show_source: true
+      resolve_aliases: false
+      show_submodules: false
