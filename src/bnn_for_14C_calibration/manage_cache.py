@@ -10,6 +10,14 @@ import gdown
 import zipfile
 import shutil
 
+from typing import (
+    Optional, 
+    Union, 
+    # List, 
+    Dict, 
+    # Tuple, 
+    Any
+)
 
 # ========================================================================
 # définition des chemins constants vers le cache local 
@@ -29,12 +37,36 @@ MODELS_DIR_LOCAL = CACHE_DIR / "models"
 # ========================================================================
 
 
-def clear_cache():
+def clear_cache() -> None:
     """
-    Supprime complètement le dossier cache de la librairie.
+    Remove the entire local cache directory used by the library.
+
+    This function deletes the cache directory and all its contents from
+    the local filesystem. If the cache directory does not exist, a message
+    is printed to indicate that there is no existing cache to remove.
+
+    Parameters
+    ----------
+    None
+
+    Returns
+    -------
+    None
+
+    Notes
+    -----
+    - The cache directory path is set to `/home/user/.bnn_for_14C_calibration`.
+    - This operation is irreversible; all cached data will be lost.
+    - The cache data can be downloaded again by using the function `download_cache_lib_data`.
+
+    Examples
+    --------
+    >>> clear_cache()
+    🗑️ removing cache directory at: /home/user/.bnn_for_14C_calibration...
+    🗑️ cache removed!
     """
     if CACHE_DIR.exists():
-        print(f"🗑️ removing cache directory at : {CACHE_DIR}...")
+        print(f"🗑️ removing cache directory at: {CACHE_DIR}...")
         shutil.rmtree(CACHE_DIR)
         print(f"🗑️ cache removed!")
     else:
@@ -43,37 +75,51 @@ def clear_cache():
 
 def is_google_drive_url(url: str) -> bool:
     """
-    Vérifie si une URL correspond à un fichier ou dossier Google Drive.
-    
-    Paramètres
+    Check whether a given URL corresponds to a Google Drive file or folder.
+
+    Parameters
     ----------
     url : str
-        L'URL à tester.
+        The URL to check.
 
-    Retour
-    ------
+    Returns
+    -------
     bool
-        True si l'URL contient 'drive.google.com', False sinon.
+        True if the URL contains 'drive.google.com', otherwise False.
+
+    Examples
+    --------
+    >>> is_google_drive_url("https://drive.google.com/file/d/12345/view?usp=sharing")
+    True
+    >>> is_google_drive_url("https://example.com/file.txt")
+    False
     """
     return "drive.google.com" in url
 
 
-def extract_drive_file_id(url: str) -> str:
+def extract_drive_file_id(url: str) -> Union[str, None]:
     """
-    Extrait l'ID d'un fichier Google Drive à partir d'une URL publique.
-    
-    Paramètres
+    Extract the Google Drive file ID from a public URL.
+
+    Parameters
     ----------
     url : str
-        L'URL publique du fichier Google Drive.
-        Exemples :
-            - https://drive.google.com/file/d/FILE_ID/view?usp=sharing
-            - https://drive.google.com/open?id=FILE_ID
+        The public Google Drive file URL.
+        Examples include:
+        - https://drive.google.com/file/d/FILE_ID/view?usp=sharing
+        - https://drive.google.com/open?id=FILE_ID
 
-    Retour
-    ------
-    str ou None
-        L'ID du fichier Google Drive, ou None si l'ID n'a pas pu être extrait.
+    Returns
+    -------
+    str or None
+        The extracted Google Drive file ID, or None if it could not be found.
+
+    Examples
+    --------
+    >>> extract_drive_file_id("https://drive.google.com/file/d/ABC123/view")
+    'ABC123'
+    >>> extract_drive_file_id("https://example.com/file.txt")
+    None
     """
     m = re.search(r"/file/d/([^/]+)", url)
     if m:
@@ -84,24 +130,46 @@ def extract_drive_file_id(url: str) -> str:
     return None
 
 
-def download_from_google_drive(url_or_id: str, output_path: Path, sleep_time: float = 0.2):
+def download_from_google_drive(
+    url_or_id: str,
+    output_path: Path,
+    sleep_time: float = 0.2
+) -> None:
     """
-    Télécharge un fichier ou un dossier depuis Google Drive.
-    Si l'URL correspond à un dossier, utilise gdown.download_folder.
+    Download a file or folder from Google Drive.
 
-    Paramètres
+    If the provided URL or ID refers to a folder, this function uses
+    `gdown.download_folder`; otherwise, it downloads a single file.
+
+    Parameters
     ----------
     url_or_id : str
-        L'URL publique Google Drive ou l'ID du fichier/dossier.
+        The public Google Drive URL or file/folder ID.
     output_path : Path
-        Le chemin local où sauvegarder le fichier ou dossier téléchargé.
-    sleep_time : float, optional (default=0.2)
-        Temps en secondes à attendre après chaque téléchargement pour limiter les requêtes.
-    
-    Comportement
-    ------------
-    - Crée les dossiers parents si nécessaire.
-    - Gère les erreurs d'accès et les affiche sans interrompre le script.
+        The local path where the downloaded file or folder will be saved.
+    sleep_time : float, optional
+        Time in seconds to wait after the download (default is 0.2 seconds).
+
+    Returns
+    -------
+    None
+
+    Raises
+    ------
+    RuntimeError
+        If the download fails for any reason.
+
+    Notes
+    -----
+    - Parent directories will be created automatically if they do not exist.
+    - Uses the `gdown` library for downloading from Google Drive.
+    - Keeps emojis in printed messages for better console feedback.
+
+    Examples
+    --------
+    >>> download_from_google_drive("https://drive.google.com/file/d/ABC123/view", Path("output.zip"))
+    📄 Downloading Google Drive file id ABC123 → output.zip
+    🗂️ Download complete!
     """
     output_path.parent.mkdir(parents=True, exist_ok=True)
     try:
@@ -117,22 +185,53 @@ def download_from_google_drive(url_or_id: str, output_path: Path, sleep_time: fl
     time.sleep(sleep_time)
 
 
-def download_from_huggingface(url: str, output_path: Path, timeout: int = 10, sleep_time: float = 0.2):
+def download_from_huggingface(
+    url: str,
+    output_path: Path,
+    timeout: int = 10,
+    sleep_time: float = 0.2
+) -> None:
     """
-    Download a file from Hugging Face Hub.
-    If the file is a .zip archive, its contents are extracted directly into `output_path`
-    without preserving the top-level folder from the archive.
+    Download a file from the Hugging Face Hub.
+
+    If the downloaded file is a `.zip` archive, its contents are automatically
+    extracted directly into `output_path` without preserving the top-level
+    folder contained in the archive.
 
     Parameters
     ----------
     url : str
         The direct Hugging Face Hub URL to the file.
-    output_path : pathlib.Path
-        Local path where the file or extracted contents will be saved.
-    timeout : float, optional
-        Timeout for HTTP requests (default 10 seconds).
+    output_path : Path
+        The local path where the file or extracted contents will be saved.
+    timeout : int, optional
+        Timeout for HTTP requests, in seconds (default is 10).
     sleep_time : float, optional
-        Delay in seconds after download to avoid throttling (default 0.2).
+        Delay in seconds after the download to prevent throttling (default is 0.2).
+
+    Returns
+    -------
+    None
+
+    Raises
+    ------
+    RuntimeError
+        If the download or extraction process fails.
+
+    Notes
+    -----
+    - Parent directories are automatically created if they do not exist.
+    - Temporary `.tmp` files are used during download to ensure file integrity.
+    - `.zip` archives are extracted with flattened top-level directories.
+
+    Examples
+    --------
+    >>> download_from_huggingface(
+    ...     "https://huggingface.co/username/model/resolve/main/model.zip",
+    ...     Path("models/model")
+    ... )
+    ⬇️ Downloading from Hugging Face: https://huggingface.co/username/model/resolve/main/model.zip → models/model
+    📦 Extracting zip models/model.tmp → models/model (flatten top-level folder)
     """
     output_path.parent.mkdir(parents=True, exist_ok=True)
     temp_file = output_path.with_suffix(".tmp")
@@ -176,60 +275,141 @@ def download_from_huggingface(url: str, output_path: Path, timeout: int = 10, sl
 def download_github_with_drive_map(
     api_url: str,
     local_dir: Path,
-    token: str = None,
+    token: Optional[str] = None,
     timeout: float = 10,
     sleep_time: float = 0.2
-):
+) -> None:
     """
-    Download a GitHub folder while integrating external sources via drive_map.json.
+    Download a GitHub folder and integrate external sources defined in a `drive_map.json` file.
+
+    This function retrieves a folder from a GitHub repository via the GitHub API.
+    If a `drive_map.json` file is present, it will use the mapping defined in it
+    to download certain files or subfolders from Hugging Face or Google Drive instead
+    of GitHub.
 
     Parameters
     ----------
     api_url : str
         GitHub API URL pointing to the folder to download.
-        Example: https://api.github.com/repos/username/repo/contents/models
-    local_dir : pathlib.Path
+        Example: ``https://api.github.com/repos/username/repo/contents/models``
+    local_dir : Path
         Local directory where the contents will be downloaded.
     token : str, optional
-        GitHub personal access token if needed (default None).
+        GitHub personal access token, if authentication is required (default is None).
     timeout : float, optional
-        Timeout in seconds for HTTP requests (default 10).
+        Timeout in seconds for HTTP requests (default is 10).
     sleep_time : float, optional
-        Delay in seconds between downloads to avoid throttling (default 0.2).
+        Delay in seconds between downloads to prevent rate limiting (default is 0.2).
+
+    Returns
+    -------
+    None
 
     Raises
     ------
     RuntimeError
         If a file or folder cannot be downloaded from both Hugging Face and Google Drive.
+    ValueError
+        If the GitHub API URL is invalid or the repository owner/repo cannot be extracted.
+
+    Notes
+    -----
+    - Creates parent directories automatically if they do not exist.
+    - Uses Hugging Face and Google Drive as fallback sources when specified in
+      ``drive_map.json``.
+    - Partially downloaded cache is cleared if an unrecoverable error occurs.
+
+    Examples
+    --------
+    >>> download_github_with_drive_map(
+    ...     "https://api.github.com/repos/dest-ash/bnn_for_14C_calibration/contents/models",
+    ...     Path.home() / ".bnn_for_14C_calibration" / "models"
+    ... )
+    📄 Found drive_map.json in https://api.github.com/repos/dest-ash/bnn_for_14C_calibration/contents/models, downloading → ~/.bnn_for_14C_calibration/models/drive_map.json
+    ⬇️ Downloading GitHub file https://raw.githubusercontent.com/... → ~/.bnn_for_14C_calibration/models/file.pt
     """
 
     headers = {"Authorization": f"token {token}"} if token else {}
 
     def get_default_branch(owner: str, repo: str) -> str:
         """
-        Récupère la branche par défaut du dépôt GitHub.
-        
-        Paramètres
+        Get the default branch name of a GitHub repository.
+
+        This helper function queries the GitHub API to retrieve metadata
+        about the repository and returns the default branch (usually ``main`` or ``master``).
+
+        Parameters
         ----------
         owner : str
-            Nom du propriétaire du dépôt.
+            GitHub username or organization name.
         repo : str
-            Nom du dépôt.
-        
-        Retour
-        ------
+            Name of the GitHub repository.
+
+        Returns
+        -------
         str
-            Nom de la branche par défaut (ex: "main" ou "master").
+            The name of the default branch, such as ``main`` or ``master``.
+
+        Raises
+        ------
+        requests.exceptions.RequestException
+            If the API request to GitHub fails.
+
+        Notes
+        -----
+        - Uses the global ``headers`` variable for authentication if a token is provided.
+        - Falls back to ``main`` if the default branch cannot be determined.
+
+        Examples
+        --------
+        >>> get_default_branch("dest-ash", "bnn_for_14C_calibration")
+        'main'
         """
         repo_info_url = f"https://api.github.com/repos/{owner}/{repo}"
         r_info = requests.get(repo_info_url, headers=headers, timeout=timeout)
         r_info.raise_for_status()
         return r_info.json().get("default_branch", "main")
 
-    def _download_folder(api_url: str, local_dir: Path):
+    def _download_folder(api_url: str, local_dir: Path) -> None:
         """
-        Fonction interne récursive pour télécharger un dossier GitHub
-        et remplacer les fichiers selon drive_map.json.
+        Recursively download the contents of a GitHub folder and apply mappings
+        defined in a local or remote ``drive_map.json`` file.
+
+        This internal function is called by :func:`download_github_with_drive_map`
+        and is responsible for traversing directories, downloading files,
+        and handling external resources (Google Drive / Hugging Face) based on mappings.
+
+        Parameters
+        ----------
+        api_url : str
+            GitHub API URL for the folder to download.
+        local_dir : Path
+            Local directory where the contents will be stored.
+
+        Returns
+        -------
+        None
+
+        Raises
+        ------
+        ValueError
+            If the API URL does not contain valid repository information.
+        RuntimeError
+            If the download from all mapped sources fails.
+
+        Notes
+        -----
+        - This function creates directories recursively.
+        - It will skip files or folders already handled by ``drive_map.json``.
+        - Partial caches are cleaned if unrecoverable errors occur.
+
+        Examples
+        --------
+        >>> _download_folder(
+        ...     "https://api.github.com/repos/user/repo/contents/models",
+        ...     Path("./models")
+        ... )
+        📄 Found drive_map.json in https://api.github.com/repos/user/repo/contents/models, downloading → ./models/drive_map.json
         """
         local_dir.mkdir(parents=True, exist_ok=True)
 
@@ -239,7 +419,7 @@ def download_github_with_drive_map(
         items = response.json()
 
         # Charge drive_map.json depuis GitHub si présent
-        drive_map = {}
+        drive_map: Dict[str, Any] = {}
         for item in items:
             if item["type"] == "file" and item["name"] == "drive_map.json":
                 local_map_path = local_dir / "drive_map.json"
@@ -254,7 +434,7 @@ def download_github_with_drive_map(
         parts = api_url.split('/')
         try:
             i = parts.index("repos")
-            owner, repo = parts[i+1], parts[i+2]
+            owner, repo = parts[i + 1], parts[i + 2]
         except (ValueError, IndexError):
             raise ValueError(f"Cannot extract owner/repo from GitHub API URL: {api_url}")
 
@@ -272,8 +452,12 @@ def download_github_with_drive_map(
                 # Hugging Face first
                 if "huggingface" in mapped:
                     try:
-                        download_from_huggingface(mapped["huggingface"], local_path,
-                                                  timeout=timeout, sleep_time=sleep_time)
+                        download_from_huggingface(
+                            mapped["huggingface"],
+                            local_path,
+                            timeout=timeout,
+                            sleep_time=sleep_time
+                        )
                         success = True
                     except Exception as e_hf:
                         print(f"⚠️ Hugging Face download failed for {relative_name}: {e_hf}")
@@ -281,7 +465,11 @@ def download_github_with_drive_map(
                 # Google Drive fallback
                 if not success and "drive" in mapped:
                     try:
-                        download_from_google_drive(mapped["drive"], local_path, sleep_time=sleep_time)
+                        download_from_google_drive(
+                            mapped["drive"],
+                            local_path,
+                            sleep_time=sleep_time
+                        )
                         success = True
                     except Exception as e_drive:
                         print(f"⚠️ Google Drive download failed for {relative_name}: {e_drive}")
@@ -293,9 +481,11 @@ def download_github_with_drive_map(
                         RuntimeError with more details about the file or the folder that matters
                     """)
                     clear_cache()
-                    raise RuntimeError(f"❌ Failed to download {relative_name} from both Hugging Face and Google Drive")
+                    raise RuntimeError(
+                        f"❌ Failed to download {relative_name} from both Hugging Face and Google Drive"
+                    )
 
-                # ✅ Already downloaded via external sources, skip GitHub
+                # ✅ Already downloaded via external sources, skipping the GitHub downloading step
                 continue
 
             # Cas fichier GitHub classique
@@ -332,37 +522,85 @@ def download_github_with_drive_map(
 
 
 
-def download_cache_lib_data(
-    overwrite = False
-):
-    if overwrite or not (CACHE_DIR.exists() and CACHE_DIR.is_dir()) :
-        if overwrite :
+def download_cache_lib_data(overwrite: bool = False) -> None:
+    """
+    Download and initialize the local cache directory for the library.
+
+    This function manages the creation (or re-creation) of the local cache directory
+    used by the package to store pre-downloaded model and data files.  
+    If ``overwrite`` is set to True, any existing cache will be removed before re-downloading.
+
+    Parameters
+    ----------
+    overwrite : bool, optional
+        Whether to force re-downloading and replace any existing cache directory (default is False).
+
+    Returns
+    -------
+    None
+
+    Notes
+    -----
+    - The cache directory ``.bnn_for_14C_calibration`` is created in the user's home directory.
+    - Requires an active internet connection for the first run.
+    - Disk space usage remains below 1 GB.
+    - This function internally calls the functions `clear_cache` and `download_github_with_drive_map`.
+
+    Examples
+    --------
+    >>> download_cache_lib_data(overwrite=False)
+    This may be the first time you need package functions that use 
+    local cache data to work. A local cache directory is going to be 
+    created and will be used after if needed without a new downloading
+    unless you delete the cache. To download this cache, network connection 
+    must be available; also some disk space is required (less than 1 GB total).
+    ******************** Creating cache directory at: /home/user/.bnn_for_14C_calibration ********************
+    ✅ Cache directory created at: /home/user/.bnn_for_14C_calibration, and filled with all the 
+    contents of the 'models' directory downloaded from GitHub and Google Drive.
+
+    >>> download_cache_lib_data(overwrite=True)
+    overwrite is True : the cache will be cleared before 
+    downloading it again...
+    🗑️ removing cache directory at : /home/user/.bnn_for_14C_calibration...
+    🗑️ cache removed!
+    ******************** Creating cache directory at: /home/user/.bnn_for_14C_calibration ********************
+    ✅ Cache directory created at: /home/user/.bnn_for_14C_calibration, and filled with all the 
+    contents of the 'models' directory downloaded from GitHub and Google Drive.
+    """
+    # Vérifie si le cache doit être téléchargé ou régénéré
+    if overwrite or not (CACHE_DIR.exists() and CACHE_DIR.is_dir()):
+        if overwrite:
             print(f"""
                 overwrite is {overwrite} : the cache will be cleared before 
                 downloading it again...
             """)
             clear_cache()
-        else :
+        else:
             print("""
                 This may be the first time you need package functions that use 
                 local cache data to work. A local cache directory is going to be 
                 created and will be used after if needed without a new downloading
-                unless you delete the cache. To download this cache, network connexion 
-                must be available ; also some disk space is required (less than 1 GB at all).
+                unless you delete the cache. To download this cache, network connection 
+                must be available; also some disk space is required (less than 1 GB total).
             """)
+
         print(f"******************** Creating cache directory at: {CACHE_DIR} ********************")
         CACHE_DIR.mkdir(parents=True, exist_ok=True)
         MODELS_DIR_LOCAL.mkdir(exist_ok=True)
+
+        # Télécharge les données de modèles depuis GitHub (et éventuellement Google Drive)
         download_github_with_drive_map(MODELS_DIR_API_URL, MODELS_DIR_LOCAL)
+
         print(f"""
         ✅ Cache directory created at: {CACHE_DIR}, and filled with all the 
         contents of the 'models' directory downloaded from GitHub and Google Drive.
         """)
-    else :
+    else:
         print(f"""
-            An existing cache directory is located at {CACHE_DIR}  and overwrite is {overwrite}.
+            An existing cache directory is located at {CACHE_DIR} and overwrite is {overwrite}.
             If you wish to force the cache download, set overwrite to True.
         """)
+
 
 
 # fonctions publiques
