@@ -7,8 +7,6 @@ Description of plotting functions:
       show_if_no_docstring: true
       show_signature: true
       separate_signature: false
-      show_source: true
-      resolve_aliases: false
       show_submodules: false
 ::: bnn_for_14C_calibration.calib_plot_functions.plot_individual_calibration_curve_part_1
     options:
@@ -17,8 +15,6 @@ Description of plotting functions:
       show_if_no_docstring: true
       show_signature: true
       separate_signature: false
-      show_source: true
-      resolve_aliases: false
       show_submodules: false
 ::: bnn_for_14C_calibration.calib_plot_functions.plot_individual_calibration_curve_part_2
     options:
@@ -27,8 +23,6 @@ Description of plotting functions:
       show_if_no_docstring: true
       show_signature: true
       separate_signature: false
-      show_source: true
-      resolve_aliases: false
       show_submodules: false
 ::: bnn_for_14C_calibration.calib_plot_functions.plot_bnn_calibration_curve
     options:
@@ -37,8 +31,6 @@ Description of plotting functions:
       show_if_no_docstring: true
       show_signature: true
       separate_signature: false
-      show_source: true
-      resolve_aliases: false
       show_submodules: false
 ::: bnn_for_14C_calibration.calib_plot_functions.plot_IntCal20_curve
     options:
@@ -47,6 +39,4 @@ Description of plotting functions:
       show_if_no_docstring: true
       show_signature: true
       separate_signature: false
-      show_source: true
-      resolve_aliases: false
       show_submodules: false

@@ -7,8 +7,6 @@ Description of the calibration functions implemented in the Python library `bnn_
       show_if_no_docstring: true
       show_signature: true
       separate_signature: false
-      show_source: true
-      resolve_aliases: false
       show_submodules: false
 ::: bnn_for_14C_calibration.calibration.IntCal20_calibration
     options:
@@ -17,8 +15,6 @@ Description of the calibration functions implemented in the Python library `bnn_
       show_if_no_docstring: true
       show_signature: true
       separate_signature: false
-      show_source: true
-      resolve_aliases: false
       show_submodules: false
 ::: bnn_for_14C_calibration.calibration.joint_calibration
     options:
@@ -27,6 +23,4 @@ Description of the calibration functions implemented in the Python library `bnn_
       show_if_no_docstring: true
       show_signature: true
       separate_signature: false
-      show_source: true
-      resolve_aliases: false
       show_submodules: false

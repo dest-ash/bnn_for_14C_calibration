@@ -7,8 +7,6 @@ Description of general utilities functions:
       show_if_no_docstring: true
       show_signature: true
       separate_signature: false
-      show_source: true
-      resolve_aliases: false
       show_submodules: false
 ::: bnn_for_14C_calibration.utils.load_data
     options:
@@ -17,8 +15,6 @@ Description of general utilities functions:
       show_if_no_docstring: true
       show_signature: true
       separate_signature: false
-      show_source: true
-      resolve_aliases: false
       show_submodules: false
 ::: bnn_for_14C_calibration.utils.minimax_scaling
     options:
@@ -27,8 +23,6 @@ Description of general utilities functions:
       show_if_no_docstring: true
       show_signature: true
       separate_signature: false
-      show_source: true
-      resolve_aliases: false
       show_submodules: false
 ::: bnn_for_14C_calibration.utils.minimax_scaling_reciproque
     options:
@@ -37,8 +31,6 @@ Description of general utilities functions:
       show_if_no_docstring: true
       show_signature: true
       separate_signature: false
-      show_source: true
-      resolve_aliases: false
       show_submodules: false
 ::: bnn_for_14C_calibration.utils.d14c_to_f14c
     options:
@@ -47,8 +39,6 @@ Description of general utilities functions:
       show_if_no_docstring: true
       show_signature: true
       separate_signature: false
-      show_source: true
-      resolve_aliases: false
       show_submodules: false
 ::: bnn_for_14C_calibration.utils.d14csig_to_f14csig
     options:
@@ -57,8 +47,6 @@ Description of general utilities functions:
       show_if_no_docstring: true
       show_signature: true
       separate_signature: false
-      show_source: true
-      resolve_aliases: false
       show_submodules: false
 ::: bnn_for_14C_calibration.utils.f14c_to_d14c
     options:
@@ -67,8 +55,6 @@ Description of general utilities functions:
       show_if_no_docstring: true
       show_signature: true
       separate_signature: false
-      show_source: true
-      resolve_aliases: false
       show_submodules: false
 ::: bnn_for_14C_calibration.utils.f14csig_to_d14csig
     options:
@@ -77,8 +63,6 @@ Description of general utilities functions:
       show_if_no_docstring: true
       show_signature: true
       separate_signature: false
-      show_source: true
-      resolve_aliases: false
       show_submodules: false
 ::: bnn_for_14C_calibration.utils.f14c_to_c14
     options:
@@ -87,8 +71,6 @@ Description of general utilities functions:
       show_if_no_docstring: true
       show_signature: true
       separate_signature: false
-      show_source: true
-      resolve_aliases: false
       show_submodules: false
 ::: bnn_for_14C_calibration.utils.f14csig_to_c14sig
     options:
@@ -97,8 +79,6 @@ Description of general utilities functions:
       show_if_no_docstring: true
       show_signature: true
       separate_signature: false
-      show_source: true
-      resolve_aliases: false
       show_submodules: false
 ::: bnn_for_14C_calibration.utils.c14_to_f14c
     options:
@@ -107,8 +87,6 @@ Description of general utilities functions:
       show_if_no_docstring: true
       show_signature: true
       separate_signature: false
-      show_source: true
-      resolve_aliases: false
       show_submodules: false
 ::: bnn_for_14C_calibration.utils.c14sig_to_f14csig
     options:
@@ -117,8 +95,6 @@ Description of general utilities functions:
       show_if_no_docstring: true
       show_signature: true
       separate_signature: false
-      show_source: true
-      resolve_aliases: false
       show_submodules: false
 ::: bnn_for_14C_calibration.utils.d14c_to_c14
     options:
@@ -127,8 +103,6 @@ Description of general utilities functions:
       show_if_no_docstring: true
       show_signature: true
       separate_signature: false
-      show_source: true
-      resolve_aliases: false
       show_submodules: false
 ::: bnn_for_14C_calibration.utils.d14csig_to_c14sig
     options:
@@ -137,8 +111,6 @@ Description of general utilities functions:
       show_if_no_docstring: true
       show_signature: true
       separate_signature: false
-      show_source: true
-      resolve_aliases: false
       show_submodules: false
 ::: bnn_for_14C_calibration.utils.c14_to_d14c
     options:
@@ -147,8 +119,6 @@ Description of general utilities functions:
       show_if_no_docstring: true
       show_signature: true
       separate_signature: false
-      show_source: true
-      resolve_aliases: false
       show_submodules: false
 ::: bnn_for_14C_calibration.utils.c14sig_to_d14csig
     options:
@@ -157,8 +127,6 @@ Description of general utilities functions:
       show_if_no_docstring: true
       show_signature: true
       separate_signature: false
-      show_source: true
-      resolve_aliases: false
       show_submodules: false
 ::: bnn_for_14C_calibration.utils.ajoute_segment_vertical
     options:
@@ -167,8 +135,6 @@ Description of general utilities functions:
       show_if_no_docstring: true
       show_signature: true
       separate_signature: false
-      show_source: true
-      resolve_aliases: false
       show_submodules: false
 ::: bnn_for_14C_calibration.utils.ajoute_segment_horizontal
     options:
@@ -177,8 +143,6 @@ Description of general utilities functions:
       show_if_no_docstring: true
       show_signature: true
       separate_signature: false
-      show_source: true
-      resolve_aliases: false
       show_submodules: false
 ::: bnn_for_14C_calibration.utils.bp_to_calendar
     options:
@@ -187,8 +151,6 @@ Description of general utilities functions:
       show_if_no_docstring: true
       show_signature: true
       separate_signature: false
-      show_source: true
-      resolve_aliases: false
       show_submodules: false
 ::: bnn_for_14C_calibration.utils.calendar_to_bp
     options:
@@ -197,6 +159,4 @@ Description of general utilities functions:
       show_if_no_docstring: true
       show_signature: true
       separate_signature: false
-      show_source: true
-      resolve_aliases: false
       show_submodules: false

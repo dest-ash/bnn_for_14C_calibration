@@ -7,8 +7,6 @@ Description of built in functions for Baysian modelling:
       show_if_no_docstring: true
       show_signature: true
       separate_signature: false
-      show_source: true
-      resolve_aliases: false
       show_submodules: false
 ::: bnn_for_14C_calibration.bnn_models_built_in.bnn_load_model_part_1
     options:
@@ -17,8 +15,6 @@ Description of built in functions for Baysian modelling:
       show_if_no_docstring: true
       show_signature: true
       separate_signature: false
-      show_source: true
-      resolve_aliases: false
       show_submodules: false
 ::: bnn_for_14C_calibration.bnn_models_built_in.bnn_load_model_part_2
     options:
@@ -27,8 +23,6 @@ Description of built in functions for Baysian modelling:
       show_if_no_docstring: true
       show_signature: true
       separate_signature: false
-      show_source: true
-      resolve_aliases: false
       show_submodules: false
 ::: bnn_for_14C_calibration.bnn_models_built_in.spline_regressor_built_in
     options:
@@ -37,8 +31,6 @@ Description of built in functions for Baysian modelling:
       show_if_no_docstring: true
       show_signature: true
       separate_signature: false
-      show_source: true
-      resolve_aliases: false
       show_submodules: false
 ::: bnn_for_14C_calibration.bnn_models_built_in.create_and_fit_Be10_curve
     options:
@@ -47,8 +39,6 @@ Description of built in functions for Baysian modelling:
       show_if_no_docstring: true
       show_signature: true
       separate_signature: false
-      show_source: true
-      resolve_aliases: false
       show_submodules: false
 ::: bnn_for_14C_calibration.bnn_models_built_in.create_and_fit_PaleoIntensity_curve
     options:
@@ -57,8 +47,6 @@ Description of built in functions for Baysian modelling:
       show_if_no_docstring: true
       show_signature: true
       separate_signature: false
-      show_source: true
-      resolve_aliases: false
       show_submodules: false
 ::: bnn_for_14C_calibration.bnn_models_built_in.create_features
     options:
@@ -67,6 +55,4 @@ Description of built in functions for Baysian modelling:
       show_if_no_docstring: true
       show_signature: true
       separate_signature: false
-      show_source: true
-      resolve_aliases: false
       show_submodules: false

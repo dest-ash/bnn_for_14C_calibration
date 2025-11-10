@@ -2,9 +2,17 @@ site_name: Bayesian Neural Network For Radiocarbon Calibration
 site_description: "Documentation for the `bnn_for_14C_calibration` Python library"
 site_author: "Destin ASHUZA CIRUMANGA"
 site_url: https://dest-ash.github.io/bnn_for_14C_calibration/
+repo_url: https://github.com/dest-ash/bnn_for_14C_calibration
+repo_name: bnn_for_14C_calibration
+edit_uri: blob/main/docs/
 
 theme:
   name: material
+  features:
+    - navigation.expand
+    - content.action.edit
+    - content.code.annotate
+    - content.action.view
 
 plugins:
   - search
@@ -12,15 +20,18 @@ plugins:
       handlers:
         python:
           options:
-            paths: ["src"]
             show_root_heading: false
             show_root_toc_entry: false
             docstring_style: numpy
             show_signature: true
             separate_signature: true
             merge_init_into_class: true
-            linking_mode: name
-            source: "https://github.com/dest-ash/bnn_for_14C_calibration/blob/main/{path}#L{start_line}-L{end_line}"
+            show_source: true
+            extra:
+              paths: ["src"]
+              # linking_mode: name
+              source: "https://github.com/dest-ash/bnn_for_14C_calibration/blob/main/{path}#L{start_line}-L{end_line}"
+              resolve_aliases: false
 
 nav:
   - Installation and quick start: index.md
