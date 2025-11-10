@@ -509,7 +509,7 @@ def d14c_to_c14(
     - This function is computed as the composition of `f14c_to_c14` and `d14c_to_f14c`:
         c14 = f14c_to_c14(d14c_to_f14c(d14c,teta)).
     """
-  return f14c_to_c14(d14c_to_f14c(d14c,teta))
+    return f14c_to_c14(d14c_to_f14c(d14c,teta))
 
 def d14csig_to_c14sig(
     d14c: NumberOrArray, 
@@ -543,10 +543,10 @@ def d14csig_to_c14sig(
             d14csig_to_f14csig(d14csig,teta)
         ).
     """
-  return f14csig_to_c14sig(
-    d14c_to_f14c(d14c,teta),
-    d14csig_to_f14csig(d14csig,teta)
-  )
+    return f14csig_to_c14sig(
+        d14c_to_f14c(d14c,teta),
+        d14csig_to_f14csig(d14csig,teta)
+    )
 
 
 # domaine c14 vers domaine d14c
@@ -573,7 +573,7 @@ def c14_to_d14c(c14: NumberOrArray, teta: NumberOrArray) -> NumberOrArray:
     - This function is computed as the composition of `f14c_to_d14c` and `c14_to_f14c`:
         d14c = f14c_to_d14c(c14_to_f14c(c14),teta).
     """
-  return f14c_to_d14c(c14_to_f14c(c14),teta)
+    return f14c_to_d14c(c14_to_f14c(c14),teta)
 
 def c14sig_to_d14csig(
     c14: NumberOrArray, 
@@ -606,46 +606,60 @@ def c14sig_to_d14csig(
             teta
         ).
     """
-  return f14csig_to_d14csig(
-    c14sig_to_f14csig(c14,c14sig),
-    teta
-  )
+    return f14csig_to_d14csig(
+        c14sig_to_f14csig(c14,c14sig),
+        teta
+    )
 
+
+# --------------------------
+# Segment plotting
+# --------------------------
 
 # foncions pour tracer les segments / barres d'erreurs
 
-def ajoute_segment_vertical(x, y_min, y_max, ax=None, color='red', linestyle='-', linewidth=2, label=None,
-                            ticks=True, tick_size=0.1):
+def ajoute_segment_vertical(
+    x: float,
+    y_min: float,
+    y_max: float,
+    ax: plt.Axes = None,
+    color: str = 'red',
+    linestyle: str = '-',
+    linewidth: float = 2,
+    label: str = None,
+    ticks: bool = True,
+    tick_size: float = 0.1
+) -> plt.Line2D:
     """
-    Trace un segment vertical de (x, y_min) à (x, y_max) et ajoute, si désiré, des traits horizontaux aux extrémités.
+    Plot a vertical segment from (x, y_min) to (x, y_max) with optional horizontal ticks at ends.
 
-    Paramètres
+    Parameters
     ----------
     x : float
-        L'abscisse du segment.
+        X-coordinate of the segment.
     y_min : float
-        Ordonnée de départ du segment (bas).
+        Starting Y-coordinate (bottom).
     y_max : float
-        Ordonnée de fin du segment (haut).
+        Ending Y-coordinate (top).
     ax : matplotlib.axes.Axes, optional
-        L'axe sur lequel tracer. Si None, utilise l'axe courant.
+        Axis to plot on. If None, uses current axis.
     color : str, optional
-        Couleur du segment.
+        Segment color (default 'red').
     linestyle : str, optional
-        Style de trait.
+        Line style (default '-').
     linewidth : float, optional
-        Épaisseur du segment.
+        Line width (default 2).
     label : str, optional
-        Légende du segment.
+        Label for the segment.
     ticks : bool, optional
-        Si True, ajoute des petits traits horizontaux aux extrémités.
+        If True, adds small horizontal ticks at the segment ends (default True).
     tick_size : float, optional
-        Longueur des petits traits horizontaux.
+        Length of horizontal ticks (default 0.1).
 
-    Retourne
-    --------
-    line : matplotlib.lines.Line2D
-        L'objet ligne du segment principal.
+    Returns
+    -------
+    matplotlib.lines.Line2D
+        The main line object of the vertical segment.
     """
     if ax is None:
         ax = plt.gca()
@@ -660,38 +674,48 @@ def ajoute_segment_vertical(x, y_min, y_max, ax=None, color='red', linestyle='-'
     return line
 
 
-def ajoute_segment_horizontal(y, x_min, x_max, ax=None, color='blue', linestyle='-', linewidth=2, label=None,
-                              ticks=True, tick_size=0.1):
+def ajoute_segment_horizontal(
+    y: float,
+    x_min: float,
+    x_max: float,
+    ax: plt.Axes = None,
+    color: str = 'blue',
+    linestyle: str = '-',
+    linewidth: float = 2,
+    label: str = None,
+    ticks: bool = True,
+    tick_size: float = 0.1
+) -> plt.Line2D:
     """
-    Trace un segment horizontal de (x_min, y) à (x_max, y) et ajoute, si désiré, des traits verticaux aux extrémités.
+    Plot a horizontal segment from (x_min, y) to (x_max, y) with optional vertical ticks at ends.
 
-    Paramètres
+    Parameters
     ----------
     y : float
-        L'ordonnée du segment.
+        Y-coordinate of the segment.
     x_min : float
-        Abscisse de départ du segment (gauche).
+        Starting X-coordinate (left).
     x_max : float
-        Abscisse de fin du segment (droite).
+        Ending X-coordinate (right).
     ax : matplotlib.axes.Axes, optional
-        L'axe sur lequel tracer. Si None, utilise l'axe courant.
+        Axis to plot on. If None, uses current axis.
     color : str, optional
-        Couleur du segment.
+        Segment color (default 'blue').
     linestyle : str, optional
-        Style de trait.
+        Line style (default '-').
     linewidth : float, optional
-        Épaisseur du segment.
+        Line width (default 2).
     label : str, optional
-        Légende du segment.
+        Label for the segment.
     ticks : bool, optional
-        Si True, ajoute des petits traits verticaux aux extrémités.
+        If True, adds small vertical ticks at the segment ends (default True).
     tick_size : float, optional
-        Longueur des petits traits verticaux.
+        Length of vertical ticks (default 0.1).
 
-    Retourne
-    --------
-    line : matplotlib.lines.Line2D
-        L'objet ligne du segment principal.
+    Returns
+    -------
+    matplotlib.lines.Line2D
+        The main line object of the horizontal segment.
     """
     if ax is None:
         ax = plt.gca()
@@ -706,32 +730,119 @@ def ajoute_segment_horizontal(y, x_min, x_max, ax=None, color='blue', linestyle=
     return line
 
 
+# --------------------------
+# BP ↔ Calendar conversion
+# --------------------------
 
-def bp_to_calendar(bp):
+
+def bp_to_calendar(bp: Union[int, np.ndarray]) -> Union[Tuple[int, str], np.ndarray]:
     """
-    Convertit une date BP (Before Present, référence 1949) en BCE/CE.
-    Retourne un tuple : (année, 'BCE' ou 'CE')
+    Converts BP (Before Present, ref. 1949) to calendar year BCE/CE.
+
+    Parameters
+    ----------
+    bp : int or np.ndarray
+        Year(s) in BP (Before Present, reference year 1949).
+
+    Returns
+    -------
+    Tuple[int, str] or np.ndarray
+        - If single int: tuple (year, 'BCE' or 'CE')
+        - If numpy array: structured array of (year, era) for each element
+
+    Notes
+    -----
+    - BP > 1949 corresponds to BCE, else CE.
+    - Skips year 0: 1949 BP = 1 CE.
     """
-    if bp > 1949:
-        year = bp - 1949
-        return (year, 'BCE')
+    if isinstance(bp, np.ndarray):
+        years = np.where(bp > 1949, bp - 1949, 1950 - bp)
+        eras = np.where(bp > 1949, 'BCE', 'CE')
+        return np.array(list(zip(years, eras)), dtype=object)
     else:
-        year = 1950 - bp  # on saute l’an 0 → donc 1949 BP = 1 CE
-        return (year, 'CE')
+        if bp > 1949:
+            year = bp - 1949
+            return (year, 'BCE')
+        else:
+            year = 1950 - bp  # on saute l’an 0 → donc 1949 BP = 1 CE
+            return (year, 'CE')
 
 
-def calendar_to_bp(year, era):
+
+def calendar_to_bp(
+    year: Union[int, np.ndarray],
+    era: Union[str, np.ndarray]
+) -> Union[int, np.ndarray]:
     """
-    Convertit une date en BCE ou CE vers BP.
-    year : entier positif
-    era  : 'BCE' ou 'CE'
+    Converts calendar year(s) in BCE or CE to BP (Before Present, ref. 1949).
+
+    Parameters
+    ----------
+    year : int or np.ndarray
+        Positive calendar year(s) in BCE or CE.
+    era : str or np.ndarray
+        Era indicator(s): 'BCE' or 'CE'.
+        If a NumPy array is provided, it must have the same shape as `year`.
+
+    Returns
+    -------
+    int or np.ndarray
+        Corresponding year(s) in BP.
+
+    Raises
+    ------
+    ValueError
+        If any element in `era` is not 'BCE' or 'CE', or if array shapes do not match.
+
+    Notes
+    -----
+    - Skips year 0: 1 CE = 1949 BP.
+    - Supports both scalar and vectorized inputs.
+    - When given a structured array as returned by `bp_to_calendar`,
+      it will internally extract the year and era columns before computation.
+
+    Examples
+    --------
+    >>> calendar_to_bp(2500, 'BCE')
+    4449
+
+    >>> calendar_to_bp(2020, 'CE')
+    -70
+
+    >>> arr = np.array([[2500, 'BCE'], [2020, 'CE']], dtype=object)
+    >>> calendar_to_bp(arr[:, 0].astype(int), arr[:, 1])
+    array([4449.,  -70.])
+    >>> calendar_to_bp(arr[:, 0], arr[:, 1])
+    array([4449.,  -70.])
     """
-    if era == 'BCE':
-        return 1949 + year
-    elif era == 'CE':
-        return 1950 - year  # on saute l’an 0
+    # Support structured array returned by bp_to_calendar
+    if isinstance(year, np.ndarray) and year.dtype == object and year.ndim == 2 and year.shape[1] == 2:
+        # form (year, era)
+        year, era = year[:, 0].astype(int), year[:, 1]
+
+    if isinstance(year, np.ndarray):
+        if not isinstance(era, np.ndarray):
+            raise ValueError("When 'year' is an array, 'era' must also be an array.")
+        if year.shape != era.shape:
+            raise ValueError("'year' and 'era' arrays must have the same shape.")
+
+        bp = np.empty_like(year, dtype=float)
+        mask_bce = era == 'BCE'
+        mask_ce = era == 'CE'
+
+        if not np.all(mask_bce | mask_ce):
+            raise ValueError("All 'era' values must be either 'BCE' or 'CE'.")
+
+        bp[mask_bce] = 1949 + year[mask_bce]
+        bp[mask_ce] = 1950 - year[mask_ce]
+        return bp
     else:
-        raise ValueError("L'ère doit être 'BCE' ou 'CE'.")
+        if era == 'BCE':
+            return 1949 + year
+        elif era == 'CE':
+            return 1950 - year  # on saute l’an 0
+        else:
+            raise ValueError("Era must be 'BCE' or 'CE'.")
 
 
 
@@ -756,4 +867,8 @@ __all__ = [
     "ajoute_segment_horizontal",
     "bp_to_calendar",
     "calendar_to_bp"
+]
+
+not_included_in_doc = [
+    "read_params_from_file"
 ]
