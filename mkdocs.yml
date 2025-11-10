@@ -29,8 +29,8 @@ plugins:
             show_source: true
             extra:
               paths: ["src"]
-              # linking_mode: name
-              source: "https://github.com/dest-ash/bnn_for_14C_calibration/blob/main/{path}#L{start_line}-L{end_line}"
+              linking_mode: name
+              # source: "https://github.com/dest-ash/bnn_for_14C_calibration/blob/main/{path}#L{start_line}-L{end_line}"
               resolve_aliases: false
 
 nav:
