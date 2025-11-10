@@ -11,38 +11,52 @@ from .utils import (
     load_data
 )
     
+from typing import (
+    Union, 
+    Tuple, 
+)
 
 # ========================================================================
 # lois a priori et a posteriori
 # ========================================================================
 
-
-def gaussian_prior(kernel_size, bias_size, dtype=None, sigma=1):
+def gaussian_prior(
+    kernel_size: int,
+    bias_size: int,
+    dtype: tf.dtypes.DType = None,
+    sigma: float = 1.0
+) -> keras.Sequential:
     """
-    
+    Define a Gaussian prior distribution over weights and biases of a Bayesian neural network.
+
     Parameters
     ----------
-    kernel_size : TYPE int
-        DESCRIPTION.
-    bias_size : TYPE int
-        DESCRIPTION.
-    dtype : TYPE, optional
-        DESCRIPTION. The default is None.
+    kernel_size : int
+        Number of kernel weights in the layer.
+    bias_size : int
+        Number of bias terms in the layer.
+    dtype : tf.dtypes.DType, optional
+        TensorFlow data type for the distribution (default None).
+    sigma : float, optional
+        Standard deviation of the Gaussian prior (default 1.0).
 
     Returns
     -------
-    prior_model : TYPE distribution "non entrainable"
-        DESCRIPTION.  Définit la loi à priori pour chaque poids (et biais) du réseau comme une loi normale de moyenne = 0 et écart type = 1.
-        On peut noter que la distribution a priori n'est pas entraînable ici, car ses paramètres sont fixés
+    keras.Sequential
+        Non-trainable prior distribution model. Each weight and bias is assumed independent
+        and distributed according to a normal distribution N(0, sigma^2).
 
+    Notes
+    -----
+    - The prior distribution is **non-trainable**; its parameters are fixed.
     """
     n = kernel_size + bias_size
-    var_mat_diag = sigma * tf.ones(n)
+    var_mat_diag = sigma * tf.ones(n, dtype=dtype)
     prior_model = keras.Sequential(
         [
             tfp.layers.DistributionLambda(
                 lambda t: tfp.distributions.MultivariateNormalDiag(
-                    loc=tf.zeros(n), scale_diag=var_mat_diag
+                    loc=tf.zeros(n, dtype=dtype), scale_diag=var_mat_diag
                 )
             )
         ]
@@ -50,25 +64,34 @@ def gaussian_prior(kernel_size, bias_size, dtype=None, sigma=1):
     return prior_model
 
 
-def independent_gaussian_posterior(kernel_size, bias_size, dtype=None) :
+def independent_gaussian_posterior(
+    kernel_size: int,
+    bias_size: int,
+    dtype: tf.dtypes.DType = None
+) -> keras.Sequential:
     """
+    Define an independent Gaussian posterior distribution for variational inference
+    in Bayesian neural networks.
 
     Parameters
     ----------
-    kernel_size : TYPE int
-        DESCRIPTION.
-    bias_size : TYPE int
-        DESCRIPTION.
-    dtype : TYPE, optional
-        DESCRIPTION. The default is None.
+    kernel_size : int
+        Number of kernel weights in the layer.
+    bias_size : int
+        Number of bias terms in the layer.
+    dtype : tf.dtypes.DType, optional
+        TensorFlow data type for the distribution (default None).
 
     Returns
     -------
-    posterior_model : TYPE "distribution entrainable"
-        DESCRIPTION. Définit la distribution variationnelle de poids à postériori comme une gaussienne multivariée indépendante.
-        On peut noter que les paramètres apprenables pour cette distribution sont la moyenne et la matrice diagonale variances-covariances
-        (les covariances sont nulles, ce qui implique que les poids sont indépendants pour une gaussienne)
+    keras.Sequential
+        Trainable posterior distribution model. Each weight and bias has a learnable mean
+        and diagonal variance. Off-diagonal covariances are zero, implying independence
+        among weights.
 
+    Notes
+    -----
+    - The parameters of the distribution (mean and diagonal variance) are **trainable**.
     """
     n = kernel_size + bias_size
     posterior_model = keras.Sequential(
@@ -76,7 +99,7 @@ def independent_gaussian_posterior(kernel_size, bias_size, dtype=None) :
             tfp.layers.VariableLayer(
                 tfp.layers.IndependentNormal.params_size(n), dtype=dtype
             ),
-           tfp.layers.IndependentNormal(n),
+            tfp.layers.IndependentNormal(n),
         ]
     )
     return posterior_model
@@ -85,32 +108,65 @@ def independent_gaussian_posterior(kernel_size, bias_size, dtype=None) :
 # fonction de perte
 # ========================================================================
 
-def negative_loglikelihood(targets, estimated_distribution):
+def negative_loglikelihood(
+    targets: Union[np.ndarray, tf.Tensor],
+    estimated_distribution: tfp.distributions.Distribution
+) -> tf.Tensor:
     """
+    Compute negative log-likelihood for a probabilistic prediction.
 
     Parameters
     ----------
-    targets : TYPE float
-        DESCRIPTION. les valeurs de la variable cible
-    estimated_distribution : TYPE "distribution"
-        DESCRIPTION. la vraissemble ("estimée") du (par le) modèle
+    targets : np.ndarray or tf.Tensor
+        True target values.
+    estimated_distribution : tfp.distributions.Distribution
+        Estimated (predicted) distribution output from the Bayesian network.
 
     Returns
     -------
-    TYPE function
-        DESCRIPTION. l'opposé de la log-vraissemblance comme fonction de perte à utiliser dans le cadre des réseaux bayésiens probabilistes 
-        (sortie du réseau stochastique/aléatoire) lors de l'estimation de la loi à postériori par inférence variationnelle
+    tf.Tensor
+        Negative log-likelihood value for use as a loss function in Bayesian neural networks.
 
+    Notes
+    -----
+    - Used with stochastic outputs of probabilistic networks.
+    - Supports variational inference for posterior estimation.
     """
     return -estimated_distribution.log_prob(targets)
 
 # ========================================================================
-# fonctions d'aide pour les prédctions
+# fonctions d'aide pour les prédictions
 # ========================================================================
 
+def bnn_make_predictions_(
+    bnn_model: keras.Model,
+    X_test: Union[np.ndarray, tf.Tensor],
+    iterations: int = 100,
+    batch_size: int = None
+) -> np.ndarray:
+    """
+    Generate predictions from a Bayesian neural network by repeated stochastic forward passes.
 
-# à utiliser durant la phase de calibration
-def bnn_make_predictions_(bnn_model, X_test, iterations=100, batch_size = None) :
+    Parameters
+    ----------
+    bnn_model : keras.Model
+        Trained Bayesian neural network.
+    X_test : np.ndarray or tf.Tensor
+        Test input data.
+    iterations : int, optional
+        Number of stochastic forward passes to perform (default 100).
+    batch_size : int, optional
+        Batch size to use during prediction. If None, defaults to full batch.
+
+    Returns
+    -------
+    np.ndarray
+        Concatenated predictions from all iterations. Shape: (n_samples, n_outputs, iterations)
+
+    Notes
+    -----
+    - Each call to the model produces a stochastic output due to the variational posterior.
+    """
     predicted = []
     for _ in range(iterations):
         # !!! TO DO : investiger les différences de comportement entre 
@@ -122,18 +178,35 @@ def bnn_make_predictions_(bnn_model, X_test, iterations=100, batch_size = None) 
     return predicted
 
 # ========================================================================
-# fonctions d'aide pour sauvegarder les prédctions
+# fonctions d'aide pour sauvegarder les prédictions
 # ========================================================================
 
+def bnn_load_predictions_(filepath: str) -> Tuple[np.ndarray, int, int]:
+    """
+    Load predictions generated by a Bayesian neural network from a CSV file.
 
-# pour télécharger les prédictions à utiliser en calibration 
-# données par la fonction bnn_make_predictions_
-def bnn_load_predictions_(filepath):
-    predictions_df = load_data(path = filepath, sep = ",")
+    Parameters
+    ----------
+    filepath : str
+        Path to the CSV file containing predictions.
+
+    Returns
+    -------
+    predictions_array : np.ndarray
+        Predictions as a float32 numpy array.
+    nb_intervals : int
+        Number of intervals (rows) in the predictions.
+    nb_curves : int
+        Number of curves (columns) in the predictions.
+
+    Notes
+    -----
+    - Intended for predictions generated by `bnn_make_predictions_` for calibration purposes.
+    """
+    predictions_df = load_data(path=filepath, sep=",")
     predictions_array = predictions_df.to_numpy(dtype=np.float32)
     nb_intervals, nb_curves = predictions_array.shape
     return predictions_array, nb_intervals, nb_curves
-
 
 
 __all__ = [
