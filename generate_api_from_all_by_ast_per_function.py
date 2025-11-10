@@ -21,13 +21,13 @@ DESCRIPTIONS_FILE = pathlib.Path("module_descriptions.json")
 
 MODULE_DESCRIPTIONS = {
     # courte description des modules
-    "bnn_models_built_in_utils": "Description of the utilities functions for Bayesian modeling: ",
+    "bnn_models_built_in_utils": "Description of helper functions for Bayesian modeling: ",
     "bnn_models_built_in": "Description of built in functions for Baysian modelling: ",
     "calib_plot_functions": "Description of plotting functions: ",
-    "calibration_utils": "Description of helpers functions for calibration step: ",
+    "calibration_utils": "Description of helper functions for calibration step: ",
     "calibration": "Description of the calibration functions implemented in the Python library `bnn_for_14C_calibration`: ",
     "manage_cache": "Description of the functions implemented to store and manage lib data in a local cache on the disk: ",
-    "utils": "Description of general utilities functions: ",
+    "utils": "Description of general helper functions: ",
 }
 
 

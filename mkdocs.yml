@@ -38,13 +38,13 @@ nav:
   - User Guide:
       - Calibration functions: reference/calibration.md
       - Plotting functions: reference/calib_plot_functions.md
-      - Local cache management functions: reference/manage_cache.md
+      - Local cache management: reference/manage_cache.md
   - Internals:
-    - General lib utilities functions: reference/utils.md
-    - Bayesian modeling functions:
-      - Utilities functions: reference/bnn_models_built_in_utils.md
+    - General helper functions: reference/utils.md
+    - Bayesian modeling and calibration:
+      - Utility functions: reference/bnn_models_built_in_utils.md
       - Built in models: reference/bnn_models_built_in.md
-      - Utilities functions for calibration: reference/calibration_utils.md
+      - Helper functions for calibration: reference/calibration_utils.md
 
 
 # gestion équations math
