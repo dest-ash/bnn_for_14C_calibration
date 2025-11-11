@@ -24,9 +24,11 @@ from .utils import (
 )
 
 from typing import (
+    Literal,
     Optional,
     Union,
-    List
+    List,
+    Tuple
 )
 
 
@@ -561,19 +563,89 @@ def bnn_load_model_part_2(
 # fonctions à intégrer dans le module model_built_in (ou utils_functions selon préférence)
 
 def spline_regressor_built_in(
-    # paramètres de SplineTransfomer
-    n_knots=5, # nombre de noeuds >=2
-    degree=3, # degré de la spline (cubique par défaut)
-    knots='quantile', # méthode des placements de noeuds ('uniforme' par défaut ou 'quantile'), 
-                     # sinon un vecteur des noeuds (dans ce cas, n_knots est ignoré)
-    extrapolation='constant', # méthode d'extrapolation au délà de la plage d'apprentissage 
-                              # {'error', 'constant', 'linear', 'continue', 'periodic'}, default='constant'
-    include_bias=True, # inclure un intercept pour chacune des bases de la spline ou pas
+    # paramètres de SplineTransformer
+    n_knots: int = 5, 
+    degree: int = 3, 
+    knots: Union[Literal["quantile", "uniform"], np.ndarray, list] = "quantile",
+    extrapolation: Literal["constant", "linear", "continue", "periodic", "error"] = "constant",
+    include_bias: bool = True,
     
     # paramètres de Ridge
-    alpha=1.0, # pénalisation
-    fit_intercept=True # présence ou non de l'intercept dans le modèle de régression
-) :
+    alpha: float = 1.0,
+    fit_intercept: bool = True
+) -> Pipeline:
+    """
+    Build a spline-based regression model using a `SplineTransformer` followed by a penalized 
+    linear regressor (`Ridge`).  
+
+    This function provides a compact and interpretable non-linear regression model that 
+    fits smooth curves using B-splines, while applying L2 regularization (ridge penalty) 
+    to control overfitting.  
+    It can be used for modeling covariate relationships, interpolation, or as an 
+    auxiliary calibration component in Bayesian regression pipelines.
+
+    Parameters
+    ----------
+    n_knots : int, optional
+        Number of knots to use in the spline basis (must be ≥ 2).  
+        Default is `5`. Determines the number of spline segments.
+    degree : int, optional
+        Polynomial degree of the spline basis functions.  
+        Default is `3` (cubic splines).  
+        A higher degree allows more flexibility but increases the risk of overfitting.
+    knots : {'quantile', 'uniform'} or array-like of shape (n_knots,), optional
+        Method for determining the position of the knots:   
+        - `'quantile'`: knots placed at quantiles of the input data distribution.   
+        - `'uniform'`: equally spaced knots across the input range.   
+        - `array-like`: custom knot locations provided directly (in this case, 
+          `n_knots` is ignored).  
+        Default is `'quantile'`.
+    extrapolation : {'constant', 'linear', 'continue', 'periodic', 'error'}, optional
+        Strategy used for extrapolation beyond the range of training data:   
+        - `'constant'`: constant extrapolation at boundary values.  
+        - `'linear'`: linear extrapolation using the last segment.  
+        - `'continue'`: continue the last spline polynomial without modification.  
+        - `'periodic'`: enforce periodic continuity between endpoints.  
+        - `'error'`: raise an error for out-of-bounds input.  
+        Default is `'constant'`, ensuring stable predictions outside the training range.
+    include_bias : bool, optional
+        Whether to include a bias (intercept) term in each spline basis expansion.  
+        Default is `True`.
+    alpha : float, optional
+        Regularization strength for the ridge regression.  
+        Default is `1.0`.  
+        Larger values impose stronger penalization, reducing model variance at the cost 
+        of increased bias.
+    fit_intercept : bool, optional
+        Whether to fit an intercept term in the ridge regression model.  
+        Default is `True`.
+
+    Returns
+    -------
+    sklearn.pipeline.Pipeline
+        A scikit-learn `Pipeline` object consisting of:     
+            1. `'create_spline_basis'`: `SplineTransformer`  
+            2. `'make_penalized_linear_regression'`: `Ridge`  
+
+    Notes
+    -----
+    - This function combines a spline basis transformation (for non-linear modeling) with 
+      ridge regularization (for stability and smoothness).  
+      The resulting model can efficiently approximate smooth functions while 
+      limiting overfitting.
+    - The `'quantile'` knot placement is particularly suited for non-uniformly distributed 
+      input features, as it allocates more knots where data are denser.
+    - The `'constant'` extrapolation mode ensures stable predictions outside 
+      the training domain — a desirable property for extrapolating environmental 
+      or temporal covariates.
+    - If you provide a custom array of knots, the argument `n_knots` is ignored.
+
+    Examples
+    --------
+    >>> model = spline_regressor_built_in(n_knots=6, degree=3, alpha=0.5)
+    >>> model.fit(X_train, y_train)
+    >>> y_pred = model.predict(X_test)
+    """
     spline_transformer = SplineTransformer(
         n_knots = n_knots,
         degree = degree,
@@ -603,17 +675,90 @@ def spline_regressor_built_in(
 # ========================================================================
 
 def create_and_fit_Be10_curve(
-        Max_age = 55000,
-        Min_age = 12310,
-        eps = 0.001,
-        add_eps = False,
-        GICC05_to_BP = True,
-        n_knots = 1000, # avec environ 40000 données d'entrainement, ça fait 1 noeud tous 
-               # les 40000/1000 = 40 quantiles empiriques
-        alpha= 1.0, #1e-3 #1.0
-        extrapolation= 'constant', # {'error', 'constant', 'linear', 'continue', 'periodic'}, default='constant'
-        file_path = covariates_dir  / "be10.csv"
-) :
+    Max_age: float = 55000,
+    Min_age: float = 12310,
+    eps: float = 0.001,
+    add_eps: bool = False,
+    GICC05_to_BP: bool = True,
+    n_knots: int = 1000,
+    alpha: float = 1.0,
+    extrapolation: Literal["error", "constant", "linear", "continue", "periodic"] = "constant",
+    file_path: Union[str, Path] = covariates_dir / "be10.csv"
+):
+    """
+    Create and fit a spline-based regression model to the $^{10}$Be (Beryllium-10) dataset.
+
+    This function builds an interpolating spline for the atmospheric $^{10}$Be production rate
+    as a function of calendar age.  
+    It loads the $^{10}$Be dataset, optionally converts GICC05 ages into BP (Before Present) ages,
+    rescales the age axis between `Min_age` and `Max_age`, and fits a penalized spline model 
+    (`spline_regressor_built_in`).
+
+    The resulting model can then be used to interpolate or predict $^{10}$Be values at any 
+    normalized age within or beyond the training range.
+
+    Parameters
+    ----------
+    Max_age : float, optional
+        Maximum calendar age (in years BP) used for normalization.  
+        Default is `55000`.
+    Min_age : float, optional
+        Minimum calendar age (in years BP) used for normalization.  
+        Default is `12310`.
+    eps : float, optional
+        Small value added to the minimum age if `add_eps` is True.  
+        This prevents boundary overlap during normalization.  
+        Default is `0.001`.
+    add_eps : bool, optional
+        Whether to add `eps` to `Min_age` before scaling.  
+        Default is `False`.
+    GICC05_to_BP : bool, optional
+        If True, converts GICC05 ages to BP (Before Present) by adding 50 years.  
+        Default is `True`.  
+        The conversion follows:  
+        **age_BP = age_GICC05 + 50**
+    n_knots : int, optional
+        Number of spline knots used by `SplineTransformer`.  
+        Default is `1000`, corresponding to approximately one knot per 40 empirical quantiles 
+        for datasets with around $40000$ samples.
+    alpha : float, optional
+        Regularization strength for the Ridge regressor (L2 penalty).  
+        Default is `1.0`. Smaller values reduce bias but may increase variance.
+    extrapolation : {'constant', 'linear', 'continue', 'periodic', 'error'}, optional
+        Extrapolation method used by the spline basis outside the fitted range.  
+        Default is `'constant'`, ensuring stable predictions beyond the training domain.
+    file_path : str or pathlib.Path, optional
+        Path to the CSV file containing the $^{10}$Be dataset.  
+        Default is `covariates_dir / "be10.csv"` to use the dataset embedded in the library.   
+        `covariates_dir` is defined by the function `get_lib_data_paths` from   
+        module `bnn_for_14C_calibration.utils`.
+
+    Returns
+    -------
+    sklearn.pipeline.Pipeline
+        A fitted spline-based regression model representing the $^{10}$Be curve.
+
+    Notes
+    -----
+    - The input dataset must contain at least two columns:
+      `'age'` (in years GICC05 or BP) and `'p10Be'` (Beryllium-10 production rate).
+    - Age normalization is performed using `minimax_scaling`:
+        $scaled\_age = (age - Min\_age) / (Max\_age - Min\_age)$
+    - The model returned is a scikit-learn `Pipeline` with:
+        1. A `SplineTransformer` stage for non-linear basis expansion.
+        2. A `Ridge` regression stage for penalized fitting.
+    - The function uses the helper `spline_regressor_built_in` defined elsewhere in this module.
+    - The `"constant"` extrapolation mode is ideal for avoiding instability at the
+      limits of the calibration dataset but as for each extrapolation, this induces bias for   
+      data out of the interpolation domain.
+
+    Examples
+    --------
+    >>> Be10_model = create_and_fit_Be10_curve()
+    >>> ages_scaled = np.linspace(0, 1, 100).reshape(-1, 1)
+    >>> Be10_pred = Be10_model.predict(ages_scaled)
+
+    """
     Be10_data = load_data(path = file_path)
     
     if GICC05_to_BP :
@@ -638,17 +783,89 @@ def create_and_fit_Be10_curve(
 # ========================================================================
 
 def create_and_fit_PaleoIntensity_curve(
-        Max_age = 55000,
-        Min_age = 12310,
-        eps = 0.001,
-        add_eps = False,
-        GICC05_to_BP = True,
-        n_knots = 77, # avec 393 données d'entrainement, ça fait environ 1 noeud tous 
-               # les 393/77 = 5 quantiles empiriques
-        alpha=1e-3,
-        extrapolation= 'constant', # {'error', 'constant', 'linear', 'continue', 'periodic'}, default='constant'
-        file_path = covariates_dir  / "glopis.csv"
-) :
+    Max_age: float = 55000,
+    Min_age: float = 12310,
+    eps: float = 0.001,
+    add_eps: bool = False,
+    GICC05_to_BP: bool = True,
+    n_knots: int = 77,
+    alpha: float = 1e-3,
+    extrapolation: Literal["error", "constant", "linear", "continue", "periodic"] = "constant",
+    file_path: Union[str, Path] = covariates_dir / "glopis.csv"
+):
+    """
+    Create and fit a spline-based regression model to the PaleoIntensity dataset.
+
+    This function builds an interpolating spline for Earth's geomagnetic field 
+    paleo-intensity as a function of calendar age.  
+    It loads the data, optionally converts GICC05 ages to BP (Before Present),
+    rescales the age axis between `Min_age` and `Max_age`, and fits a penalized spline model 
+    (`spline_regressor_built_in`).
+
+    The resulting model can be used to interpolate or predict paleo-intensity values
+    for normalized ages within or slightly beyond the calibrated time range.
+
+    Parameters
+    ----------
+    Max_age : float, optional
+        Maximum calendar age (in years BP) used for normalization.  
+        Default is `55000`.
+    Min_age : float, optional
+        Minimum calendar age (in years BP) used for normalization.  
+        Default is `12310`.
+    eps : float, optional
+        Small value added to `Min_age` if `add_eps` is True.  
+        Prevents boundary overlap during normalization.  
+        Default is `0.001`.
+    add_eps : bool, optional
+        Whether to add `eps` to `Min_age` before scaling.  
+        Default is `False`.
+    GICC05_to_BP : bool, optional
+        If True, converts GICC05 ages to BP (Before Present) by adding 50 years.  
+        Default is `True`.  
+        The conversion follows:  
+        **age_BP = age_GICC05 + 50**
+    n_knots : int, optional
+        Number of spline knots used by the `SplineTransformer`.  
+        Default is `77`, corresponding to roughly one knot per 5 empirical quantiles 
+        for a dataset of ~393 samples.
+    alpha : float, optional
+        Regularization strength for the Ridge regression (L2 penalty).  
+        Default is `1e-3`. Smaller values yield smoother curves but less bias.
+    extrapolation : {'constant', 'linear', 'continue', 'periodic', 'error'}, optional
+        Extrapolation mode used by the spline basis outside the training range.  
+        Default is `'constant'`, ensuring stable behavior beyond calibration limits.
+    file_path : str or pathlib.Path, optional
+        Path to the CSV file containing the paleo-intensity dataset.  
+        Default is `covariates_dir / "glopis.csv"` to use the dataset embedded in the library.   
+        `covariates_dir` is defined by the function `get_lib_data_paths` from   
+        module `bnn_for_14C_calibration.utils`.
+
+
+    Returns
+    -------
+    sklearn.pipeline.Pipeline
+        A fitted spline-based regression model representing the PaleoIntensity curve.
+
+    Notes
+    -----
+    - The input dataset must contain at least two columns:
+      `'age'` (in years GICC05 or BP) and `'paleo_intensity'`.
+    - Age normalization is performed using `minimax_scaling`:
+      $scaled\_age = (age - Min\_age) / (Max\_age - Min\_age)$
+    - The returned model is a scikit-learn `Pipeline` containing:
+        1. A `SplineTransformer` for basis generation.
+        2. A `Ridge` regression for penalized fitting.
+    - The `"constant"` extrapolation mode avoids unrealistic oscillations 
+      outside the trained interval.
+
+    Examples
+    --------
+    >>> Paleo_model = create_and_fit_PaleoIntensity_curve()
+    >>> ages_scaled = np.linspace(0, 1, 100).reshape(-1, 1)
+    >>> paleo_pred = Paleo_model.predict(ages_scaled)
+
+    """
     PaleoIntensity_data = load_data(path = file_path)
     
     if GICC05_to_BP :
@@ -672,14 +889,80 @@ def create_and_fit_PaleoIntensity_curve(
 # ========================================================================
 
 def create_features(
-        X_train,
-        X_val = None,
-        X_test = None,
-        covariables_list_models = [],
-        covariables_max_values_from_training_stage = [],
-        covariables_min_values_from_training_stage = [],
-        scale_new_variables = True
-) :
+    X_train: np.ndarray,
+    X_val: Optional[np.ndarray] = None,
+    X_test: Optional[np.ndarray] = None,
+    covariables_list_models: List[object] = [],
+    covariables_max_values_from_training_stage: List[float] = [],
+    covariables_min_values_from_training_stage: List[float] = [],
+    scale_new_variables: bool = True
+) -> Tuple[np.ndarray, Optional[np.ndarray], Optional[np.ndarray], List[float], List[float]]:
+    """
+    Generate extended feature matrices including spline-based covariates.
+
+    This function augments input datasets (`X_train`, `X_val`, `X_test`) by appending 
+    predictions from one or more pre-fitted covariate models (e.g., Be10, PaleoIntensity, etc.).  
+    Each covariate is optionally scaled using the same min-max normalization applied 
+    during the training stage to maintain feature consistency.
+
+    Parameters
+    ----------
+    X_train : np.ndarray
+        Training feature array, typically normalized ages.  
+        Shape: `(n_samples, n_features)` withe `n_features = 1` here.
+    X_val : np.ndarray, optional
+        Validation feature array (same structure as `X_train`).  
+        Default is `None`.
+    X_test : np.ndarray, optional
+        Test feature array (same structure as `X_train`).  
+        Default is `None`.
+    covariables_list_models : list of fitted model objects, optional
+        List of pre-trained models used to compute the covariate predictions.  
+        Each must implement a `.predict()` method returning a 1D or 2D array of shape `(n_samples,)` or `(n_samples, 1)`.  
+        Default is an empty list (`[]`), meaning no covariates are added.
+    covariables_max_values_from_training_stage : list of float, optional
+        List of maximum values used for min-max scaling of covariates during the training phase.  
+        If empty, these are computed from the current `X_train` predictions.  
+        Default is `[]`.
+    covariables_min_values_from_training_stage : list of float, optional
+        List of minimum values used for min-max scaling of covariates during the training phase.  
+        If empty, these are computed from the current `X_train` predictions.  
+        Default is `[]`.
+    scale_new_variables : bool, optional
+        Whether to apply min-max scaling (`minimax_scaling`) to covariate predictions.  
+        Default is `True`.
+
+    Returns
+    -------
+    tuple
+        A tuple containing:   
+        - **X_train_with_covariables** (`np.ndarray`): augmented training features.  
+        - **X_val_with_covariables** (`np.ndarray` or `None`): augmented validation features (if provided).  
+        - **X_test_with_covariables** (`np.ndarray` or `None`): augmented test features (if provided).  
+        - **covariables_max_values_from_training_stage** (`list[float]`): max values used for scaling.  
+        - **covariables_min_values_from_training_stage** (`list[float]`): min values used for scaling.  
+
+    Notes
+    -----
+    - The function is designed to maintain scaling consistency between training and inference phases.  
+    - When `scale_new_variables=True`, the scaling bounds for validation and test data 
+      are always derived from the training predictions.
+    - If both min and max lists are empty, new values are computed from `X_train` 
+      and stored for subsequent normalization of `X_val` and `X_test`.
+    - Covariates are appended in the same order as in `covariables_list_models`.
+    - Internal scaling uses the `minimax_scaling` helper, defined elsewhere in the codebase.
+
+    Examples
+    --------
+    >>> X_train_aug, X_val_aug, X_test_aug, max_vals, min_vals = create_features(
+    ...     X_train, X_val, X_test,
+    ...     covariables_list_models=[Be10_model, PaleoIntensity_model],
+    ...     scale_new_variables=True
+    ... )
+    >>> X_train_aug.shape # expected result : (nb_training_samples, 1 + 2)
+
+    """
+
     n_covariables = len(covariables_list_models)
     
     if len(covariables_max_values_from_training_stage) == 0 and len(covariables_min_values_from_training_stage) == 0 :
