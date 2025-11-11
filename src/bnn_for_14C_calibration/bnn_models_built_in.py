@@ -23,6 +23,12 @@ from .utils import (
     minimax_scaling
 )
 
+from typing import (
+    Optional,
+    Union,
+    List
+)
+
 
 # ========================================================================
 # génération des chemins vers le cache local ou 
@@ -49,39 +55,104 @@ bnn_weights_dir = paths_results_dict["bnn_weights_dir"]
 
 # réseau bayésien avec "sortie déterministe"
 def bnn_reg_model(
-    batch_size=None, # None : si modèle déjà entrainé et utilisé juste pour faire de l'inférence
-    train_size=None, # None : si modèle déjà entrainé et utilisé juste pour faire de l'inférence
+    batch_size: Optional[int] = None,
+    train_size: Optional[int] = None,
     prior = gaussian_prior,
     posterior = independent_gaussian_posterior,
-    loss_fn=keras.losses.MeanSquaredError(),
-    input_shape=1,
-    nb_couches_cachees=1,
-    # sinon une liste d'entiers de taille nb_couches_cachees
-    neurones_par_couches="default",
-    activation="relu",  # sinon une liste de fonctions d'activation de taille nb_couches_cachees
-    use_bias=True,  # biais couches cachées : un booléen ou une liste de booléens de taille nb_couches_cachees
-    # sinon une liste de taux de dropout (compris entre 0 et 1) de taille nb_couches_cachees
-    dropout="default",
-    # biais dernière couche (ici avec 1 seul neurones car régression)
-    last_bias=True,
-    optimizer= keras.optimizers.Adam, # keras.optimizers.RMSprop,  # un optimizer de keras
-    learning_rate=0.001,
-    hybrid=False,  # mélange bayésien et fréquentiste
-    nb_couches_cachees_hybrid=0,  # couches bayésiennes si hybrid vaut True
-    # sinon une liste d'entiers de taille nb_couches_cachees
-    neurones_par_couches_hybrid="default",
-    # sinon une liste de fonctions d'activation de taille nb_couches_cachees
-    activation_hybrid="relu",
-    # biais couches cachées : un booléen ou une liste de booléens de taille nb_couches_cachees
-    use_bias_hybrid=True,
-    kl_use_exact=False, # utiliser la divergence de KL analytique ou pas (donc approchée)
-    last_hybrid=False, # si True, la couche de sortie est bayésienne ; sinon elle est standard
-    activation_of_last_layer=False, # à mettre à trou par exemple si Y est réduite dans [0,1] avec une sigmoide
-    last_activation="relu", # activation de la dernière couche au cas où activation_of_last_layer vaut True
-    # liste des métriques à utiliser
-    metrics=["mean_squared_error", "mean_absolute_error"]
-):
+    loss_fn = keras.losses.MeanSquaredError(),
+    input_shape: int = 1,
+    nb_couches_cachees: int = 1,
+    neurones_par_couches: Union[int, List[int], str] = "default",
+    activation: Union[str, List[str]] = "relu",
+    use_bias: Union[bool, List[bool]] = True,
+    dropout: Union[float, List[float], str] = "default",
+    last_bias: bool = True,
+    optimizer = keras.optimizers.Adam,
+    learning_rate: float = 0.001,
+    hybrid: bool = False,
+    nb_couches_cachees_hybrid: int = 0,
+    neurones_par_couches_hybrid: Union[int, List[int], str] = "default",
+    activation_hybrid: Union[str, List[str]] = "relu",
+    use_bias_hybrid: Union[bool, List[bool]] = True,
+    kl_use_exact: bool = False,
+    last_hybrid: bool = False,
+    activation_of_last_layer: bool = False,
+    last_activation: str = "relu",
+    metrics: List[str] = ["mean_squared_error", "mean_absolute_error"]
+) -> keras.Model:
+    """
+    Construct a Bayesian neural network (BNN) or hybrid BNN for regression tasks.
 
+    Parameters
+    ----------
+    batch_size : int or None, optional
+        Batch size for training. Used to compute KL weight.
+    train_size : int or None, optional
+        Total number of training samples. Used to compute KL weight.
+    prior : callable
+        Function returning a prior distribution over weights.
+    posterior : callable
+        Function returning a posterior distribution over weights.
+    loss_fn : callable
+        Loss function to use for model compilation (default MSE).
+    input_shape : int
+        Number of input features.
+    nb_couches_cachees : int
+        Number of hidden layers.
+    neurones_par_couches : int, list of int, or "default"
+        Number of neurons per hidden layer. Can be a single int, list of ints of length `nb_couches_cachees`, or "default".
+        If `"default"`, 10 neurons are used for each hidden layer.
+    activation : str or list of str
+        Activation function(s) for hidden layers.
+    use_bias : bool or list of bool
+        Whether to use bias in hidden layers.
+    dropout : float, list of float, or "default"
+        Dropout rate(s) for hidden layers.
+        If `"default"`, 0.0 (no dropout) is applied to all hidden layers.
+    last_bias : bool
+        Whether to use bias in the output layer.
+    optimizer : keras.optimizers.Optimizer
+        Optimizer to use for model compilation.
+    learning_rate : float
+        Learning rate for optimizer.
+    hybrid : bool
+        If True, construct a hybrid model with first layers standard and last layers Bayesian.
+    nb_couches_cachees_hybrid : int
+        Number of Bayesian hidden layers in hybrid model.
+    neurones_par_couches_hybrid : int, list of int, or "default"
+        Number of neurons per Bayesian hidden layer in hybrid model.
+        If `"default"`, 10 neurons are used for each Bayesian hidden layer.
+    activation_hybrid : str or list of str
+        Activation function(s) for Bayesian hidden layers.
+    use_bias_hybrid : bool or list of bool
+        Whether to use bias in Bayesian hidden layers.
+    kl_use_exact : bool
+        Whether to use exact KL divergence in Bayesian layers.
+    last_hybrid : bool
+        If True, output layer is Bayesian; otherwise standard.
+    activation_of_last_layer : bool
+        Whether to apply an activation to the last layer.
+    last_activation : str
+        Activation function of last layer if `activation_of_last_layer=True`.
+    metrics : list of str
+        List of metrics for model compilation.
+
+    Returns
+    -------
+    keras.Model
+        Compiled Bayesian or hybrid neural network model ready for training or inference.
+
+    Notes
+    -----
+    - Bayesian layers are implemented via `tfp.layers.DenseVariational`.
+    - KL weight is automatically scaled by `1/nb_batchs`.
+    - Hybrid model allows combining standard dense layers and Bayesian layers.
+    - Dropout is applied after each hidden layer if rate > 0.
+    - Last layer can be standard or Bayesian, with optional activation.
+    - `"default"` values:
+        - `neurones_par_couches` or `neurones_par_couches_hybrid` → 10 neurons per layer
+        - `dropout` → 0.0 (no dropout)
+    """
     # traitement des paramètres par défaut inchangés
 
     # nombre de neurones par couche cachée
@@ -281,10 +352,51 @@ def bnn_reg_model(
 
 # pour re-créer et charger un modèle dont les poids sont pré-sauvegardés
 def bnn_load_model_part_1(
-        path_to_model_weigths = "last_version",
-        covariables=False
-) :
-    
+    path_to_model_weigths: Union[str, Path] = "last_version",
+    covariables: bool = False
+) -> keras.Model:
+    """
+    Rebuild and load the first part of a pre-trained hybrid Bayesian Neural Network (BNN) model 
+    from its saved weights. It is typically used as the estimation of the first part of the 
+    radiocarbon calibration curve (from 0 to 12309 years BP).
+
+    This function reconstructs the architecture of the first hybrid model and loads 
+    its corresponding pre-trained weights from disk.  
+    The model is hybrid in structure: all hidden layers are standard deterministic dense layers, 
+    but the **output layer** is Bayesian (stochastic).
+
+    Parameters
+    ----------
+    path_to_model_weigths : str or pathlib.Path, optional
+        Path to the file containing the model weights.  
+        If set to `"last_version"`, the path is automatically resolved to the latest 
+        available version:
+        - `"bnn_part_1_with_covariables.weights.h5"` if `covariables=True`
+        - `"bnn_part_1_without_covariables.weights.h5"` otherwise.
+    covariables : bool, optional
+        Whether the model includes exogenous covariates as input features:
+        - `True` → `input_shape=3`
+        - `False` → `input_shape=1`.
+
+    Returns
+    -------
+    keras.Model
+        The reconstructed hybrid BNN model ready for inference.
+
+    Notes
+    -----
+    - Model structure:
+        - Hidden layers: 5 standard dense layers with sizes `[120, 300, 320, 340, 500]` 
+          and ReLU activations.
+        - Output layer: 1 Bayesian (stochastic) dense layer.
+        - Hidden layer biases: `[False, True, True, False, True]`.
+    - Default parameter behavior in the internal function `bnn_reg_model`:
+        - `dropout="default"` → dropout rate = 0.0 (no regularization)
+        - `neurones_par_couches_hybrid="default"` → 10 neurons per Bayesian layer (if used).
+    - This model does **not include any Bayesian hidden layers**, only the last output layer 
+      is stochastic (i.e. hybrid configuration with `last_hybrid=True` and `nb_couches_cachees_hybrid=0`).
+    """
+
     # quelques paramètres du modèle à construire (l'architecture du modèle)
     
     nb_couches_cachees = 5
@@ -292,123 +404,152 @@ def bnn_load_model_part_1(
     use_bias = [False, True, True, False, True]
     last_bias = True
     kl_use_exact = False
-    
-    
+
     # création du modèle 
-    train_size = None # on va utiliser un modèle déjà entraîné juste pour faire de la prédiction
-    batch_size = None # on va utiliser un modèle déjà entraîné juste pour faire de la prédiction
-    if covariables :
+    train_size = None  # on va utiliser un modèle déjà entraîné juste pour faire de la prédiction
+    batch_size = None
+    if covariables:
         input_shape = 3
-    else :
+    else:
         input_shape = 1
-    
+
     bnn_model_part_1 = bnn_reg_model(
-        train_size = train_size,
-        batch_size = batch_size,
-        prior = gaussian_prior,
-        posterior = independent_gaussian_posterior,
-        loss_fn = keras.losses.MeanSquaredError(),
-        input_shape = input_shape,
-        nb_couches_cachees = nb_couches_cachees,
-        neurones_par_couches = neurones_par_couches,
-        activation = "relu",
-        use_bias = use_bias,
-        dropout = "default",
-        last_bias = last_bias,
-        optimizer = keras.optimizers.Adam,
-        learning_rate = 0.001,
-        hybrid = True,
+        train_size=train_size,
+        batch_size=batch_size,
+        prior=gaussian_prior,
+        posterior=independent_gaussian_posterior,
+        loss_fn=keras.losses.MeanSquaredError(),
+        input_shape=input_shape,
+        nb_couches_cachees=nb_couches_cachees,
+        neurones_par_couches=neurones_par_couches,
+        activation="relu",
+        use_bias=use_bias,
+        dropout="default",
+        last_bias=last_bias,
+        optimizer=keras.optimizers.Adam,
+        learning_rate=0.001,
+        hybrid=True,
         nb_couches_cachees_hybrid=0,  # couches bayésiennes si hybrid vaut True
-        # sinon une liste d'entiers de taille nb_couches_cachees
         neurones_par_couches_hybrid=10,
         kl_use_exact=kl_use_exact,
-        last_hybrid = True,
-        metrics = ["mean_squared_error", "mean_absolute_error"]
+        last_hybrid=True,
+        metrics=["mean_squared_error", "mean_absolute_error"]
     )
 
-    
-    # print("Voici le résumé de l'architecture du modèle construit : \n")
-    #bnn_model_part_1_fine_tunned.summary()
-    
-    # chargement des poids sauvegrdés de ce modèle obtenus lors de l'entraînement
-    if path_to_model_weigths == "last_version" :
-        if covariables :
-            model_file_name ="bnn_part_1_with_covariables.weights.h5"
-        else :
-            model_file_name ="bnn_part_1_without_covariables.weights.h5"
+    # chargement des poids sauvegardés de ce modèle obtenus lors de l'entraînement
+    if path_to_model_weigths == "last_version":
+        if covariables:
+            model_file_name = "bnn_part_1_with_covariables.weights.h5"
+        else:
+            model_file_name = "bnn_part_1_without_covariables.weights.h5"
         path_to_model_weigths = bnn_weights_dir / model_file_name
+
     bnn_model_part_1.load_weights(path_to_model_weigths)
-    
     return bnn_model_part_1
 
 
 
-
 def bnn_load_model_part_2(
-        path_to_model_weigths = "last_version",
-        covariables=False
-) :
-    
+    path_to_model_weigths: Union[str, Path] = "last_version",
+    covariables: bool = False
+) -> keras.Model:
+    """
+    Rebuild and load the second part of a pre-trained hybrid Bayesian Neural Network (BNN) model 
+    from its saved weights. It is typically used as the estimation of the second part of the 
+    radiocarbon calibration curve (beyond 12309 years BP).
+
+    This function reconstructs the architecture of the second hybrid model and loads 
+    its corresponding pre-trained weights from disk.  
+    Unlike the first model, this one includes both a **Bayesian hidden layer** and a 
+    **Bayesian output layer**.
+
+    Parameters
+    ----------
+    path_to_model_weigths : str or pathlib.Path, optional
+        Path to the file containing the model weights.  
+        If set to `"last_version"`, the path is automatically resolved to the latest 
+        available version:
+        - `"bnn_part_2_with_covariables.weights.h5"` if `covariables=True`
+        - `"bnn_part_2_without_covariables.weights.h5"` otherwise.
+    covariables : bool, optional
+        Whether the model includes exogenous covariates as input features:
+        - `True` → `input_shape=3`
+        - `False` → `input_shape=1`.
+
+    Returns
+    -------
+    keras.Model
+        The reconstructed hybrid BNN model ready for inference.
+
+    Notes
+    -----
+    - Model structure:
+        - Hidden layers: 4 standard dense layers `[120, 300, 320, 340]`
+          followed by **1 Bayesian hidden layer (500 neurons)**.
+        - Output layer: Bayesian (stochastic) dense layer.
+        - Hidden layer biases: `[False, True, True, False]`.
+        - The 4 standard dense layers'weights are the same weights obtained after the 
+            training of the first part of the BNN model (this is a kind of transfer learning).
+            Then the training of this model allows to estimate only the Bayesian hidden layer's
+            and the last layer's weights.
+    - This model is hybrid with both deterministic and stochastic layers.
+    - The last two layers are Bayesian: one hidden and one output layer.
+    """
+
     # quelques paramètres du modèle à construire (l'architecture du modèle)
-    
     nb_couches_cachees = 4
     neurones_par_couches = [120, 300, 320, 340]
     use_bias = [False, True, True, False]
     last_bias = True
     hybrid = True
     kl_use_exact = False
-    
+
     nb_couches_cachees_hybrid = 1
     neurones_par_couches_hybrid = [500]
     use_bias_hybrid = [True]
-    
-    
+
     # création du modèle 
-    train_size = None # on va utiliser un modèle déjà entraîné juste pour faire de la prédiction
-    batch_size = None # on va utiliser un modèle déjà entraîné juste pour faire de la prédiction
-    if covariables :
+    train_size = None  # on va utiliser un modèle déjà entraîné juste pour faire de la prédiction
+    batch_size = None
+    if covariables:
         input_shape = 3
-    else :
+    else:
         input_shape = 1
-    
+
     bnn_model_part_2 = bnn_reg_model(
-        train_size = train_size,
-        batch_size = batch_size,
-        prior = gaussian_prior,
-        posterior = independent_gaussian_posterior,
-        loss_fn = keras.losses.MeanSquaredError(),
-        input_shape = input_shape,
-        nb_couches_cachees = nb_couches_cachees,
-        neurones_par_couches = neurones_par_couches,
-        activation = "relu",
-        use_bias = use_bias,
-        dropout = "default",
-        last_bias = last_bias,
-        optimizer = keras.optimizers.Adam,
-        learning_rate = 0.001,
-        hybrid = hybrid,
-        nb_couches_cachees_hybrid=nb_couches_cachees_hybrid,  # couches bayésiennes si hybrid vaut True
-        # sinon une liste d'entiers de taille nb_couches_cachees
+        train_size=train_size,
+        batch_size=batch_size,
+        prior=gaussian_prior,
+        posterior=independent_gaussian_posterior,
+        loss_fn=keras.losses.MeanSquaredError(),
+        input_shape=input_shape,
+        nb_couches_cachees=nb_couches_cachees,
+        neurones_par_couches=neurones_par_couches,
+        activation="relu",
+        use_bias=use_bias,
+        dropout="default",
+        last_bias=last_bias,
+        optimizer=keras.optimizers.Adam,
+        learning_rate=0.001,
+        hybrid=hybrid,
+        nb_couches_cachees_hybrid=nb_couches_cachees_hybrid,
         neurones_par_couches_hybrid=neurones_par_couches_hybrid,
         use_bias_hybrid=use_bias_hybrid,
         kl_use_exact=kl_use_exact,
-        last_hybrid = True,
-        metrics = ["mean_squared_error", "mean_absolute_error"]
+        last_hybrid=True,
+        metrics=["mean_squared_error", "mean_absolute_error"]
     )
-    
-    # print("Voici le résumé de l'architecture du modèle construit : \n")
-    #bnn_model_part_1_fine_tunned.summary()
-    
-    # chargement des poids sauvegrdés de ce modèle obtenus lors de l'entraînement
-    if path_to_model_weigths == "last_version" :
-        if covariables :
+
+    # chargement des poids sauvegardés
+    if path_to_model_weigths == "last_version":
+        if covariables:
             # TODO : vérifier dernière version des points pour la partie 2 du modèle avec covariables
-            model_file_name ="bnn_part_2_with_covariables.weights.h5"
-        else :
-            model_file_name ="bnn_part_2_without_covariables.weights.h5"
+            model_file_name = "bnn_part_2_with_covariables.weights.h5"
+        else:
+            model_file_name = "bnn_part_2_without_covariables.weights.h5"
         path_to_model_weigths = bnn_weights_dir / model_file_name
+
     bnn_model_part_2.load_weights(path_to_model_weigths)
-    
     return bnn_model_part_2
 
 
