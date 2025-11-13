@@ -52,7 +52,7 @@ def mono_cal_date_approx_density(
         Default is `100`.
     prior_density : {"default", callable}, optional
         Prior probability density over the calendar dates' domain.  
-        - `"default"`: a uniform prior over `[0, 1]`, the range of the calendar scaled dates.  
+        - `"default"`: a uniform prior over `[0, 1]`, the range of the scaled calendar dates.  
         - `callable`: a custom prior density function of the form `f(dates) → np.ndarray`.  
         Default is `"default"` (the only possibility supported presently).
     batch_size : int, optional
