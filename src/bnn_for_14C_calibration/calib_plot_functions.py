@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 import numpy as np
+from scipy.optimize import minimize
 
 from matplotlib import pyplot as plt
 import pandas as pd
