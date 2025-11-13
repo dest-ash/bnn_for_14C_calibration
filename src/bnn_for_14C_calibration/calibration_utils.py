@@ -71,7 +71,7 @@ def mono_cal_date_approx_density(
     Notes
     -----
     - The posterior density is proportional to the product of the prior and the likelihood:  
-      \\( p(d|m) ∝ p(d) × E_{BNN}[ \\exp(-(m - \hat{m}(d))^2 / (2σ^2)) ] \\).  
+      \\( p(d|m) ∝ p(d) × E_{BNN}[ \\exp(-(m - F^{14}C(d))^2 / (2σ^2)) ] \\).  
       This expectation is approximated by averaging over multiple stochastic 
       predictions of the BNN model.
     - The uniform prior currently assumes that the scaled ages' calibration domain is `[0, 1]`;  
@@ -85,8 +85,8 @@ def mono_cal_date_approx_density(
     Examples
     --------
     >>> density_fn = mono_cal_date_approx_density(
-    ...     mesure=1.7,
-    ...     lab_error=0.0045,
+    ...     mesure=0.954,
+    ...     lab_error=0.002,
     ...     bnn_model=my_trained_bnn,
     ...     nb_curves=200
     ... )
@@ -112,7 +112,7 @@ def mono_cal_date_approx_density(
 
     else:
         raise NotImplementedError(
-            "The provided prior density over dates is not yet supported."
+            "Custom prior densities are not yet supported."
         )
 
     # predictions avec le modèle
@@ -157,7 +157,8 @@ def _mono_cal_date_approx_density_on_middle_points_(
     precomputed predictions or a Bayesian Neural Network (BNN) model.
 
     This function extends `mono_cal_date_approx_density` to handle the case where
-    the predictions of the calibration model at middle points are **already precomputed**.
+    the predictions of the calibration model at the midpoints subdivision of 
+    the [0, 1] interval are **already precomputed**.
     This optimization is particularly useful when several radiocarbon dates are calibrated
     using the same subdivision of the scaled calendar-age domain `[0, 1]`, 
     avoiding repeated BNN evaluations.
@@ -168,9 +169,9 @@ def _mono_cal_date_approx_density_on_middle_points_(
     Parameters
     ----------
     mesure : float
-        The measured radiocarbon age (expressed in the F¹⁴C domain).
+        The measured radiocarbon age expressed in the F¹⁴C domain.
     lab_error : float
-        The measurement uncertainty (standard deviation) from the laboratory (in the F¹⁴C domain).
+        The laboratory measurement uncertainty (standard deviation), in the F¹⁴C domain.
     bnn_model : object, optional
         Trained Bayesian Neural Network model estimating the calibration curve.
         Must be compatible with `bnn_make_predictions_` and predictions expressed in the F¹⁴C domain.  
@@ -197,8 +198,8 @@ def _mono_cal_date_approx_density_on_middle_points_(
         - `"gaussian_mixture"`: mixture of Gaussians based on BNN stochastic outputs.  
         - `"curve_gaussian_approximation"`: Gaussian approximation of the mixture 
           (Central Limit Theorem approximation).  
-        - `"IntCal20"`: uses IntCal20 mean and variance directly.  
-        - `"exact_gaussian_density"`: true deterministic Gaussian likelihood.  
+        - `"IntCal20"`: Gaussian approximation using IntCal20 mean and variance directly.  
+        - `"exact_gaussian_density"`: exact Gaussian likelihood given a known true regression function.  
         Default is `"gaussian_mixture"`.
     true_regression_function : callable, optional
         True regression function `f(d)` required when `mesure_likelihood="exact_gaussian_density"`.
@@ -209,6 +210,14 @@ def _mono_cal_date_approx_density_on_middle_points_(
     density : callable
         Function `density(dates: np.ndarray) -> np.ndarray` that computes the (unnormalized) 
         posterior density of (scaled) calendar dates given the radiocarbon measurement.
+
+    Raises
+    ------
+    ValueError
+        If neither `bnn_model` nor `middle_points_predictions` are provided.  
+        If `middle_points_predictions` is not a NumPy array.  
+        If `true_regression_function` is missing when required.  
+        If `mesure_likelihood` is not one of the supported options.
 
     Notes
     -----
@@ -224,43 +233,47 @@ def _mono_cal_date_approx_density_on_middle_points_(
     -------------------------
     The posterior density is proportional to the product of the prior and the likelihood:
         $$
-        p(d | m) \\propto p(d) \\times L(m | d)
+        p(d | m) \\propto p(d) \\times L(m | d),
+        $$
+    where the likelihood term \\( L(m | d) \\) is given by:
+        $$
+        L(m|d) = E_{BNN}[ \\exp(-(m - F^{14}C(d))^2 / (2σ^2)) ].
         $$
 
-    Depending on the chosen `mesure_likelihood`, the likelihood term \\( L(m | d) \\) is given by:
+    Depending on the chosen `mesure_likelihood`, the likelihood term is estimated by:
 
     1. **Gaussian Mixture Approximation**
        $$
-       L(m|d) = \\frac{1}{N} \\sum_{i=1}^N 
+       \\hat{L}(m|d) = \\frac{1}{N} \\sum_{i=1}^N 
        \\frac{1}{\\sqrt{2\\pi}\\sigma} 
-       \\exp\\left[-\\frac{(m - \\hat{m}_i(d))^2}{2\\sigma^2}\\right]
+       \\exp\\left[-\\frac{(m - \\hat{F}^{14}_iC(d))^2}{2\\sigma^2}\\right]
        $$
-       where \\( \\hat{m}_i(d) \\) are stochastic predictions from the BNN.
+       where \\( \\hat{F}^{14}_iC(d) \\) are stochastic predictions from the BNN.
 
     2. **Curve Gaussian Approximation (Central Limit Theorem)**
        $$
-       L(m|d) = \\frac{1}{\\sqrt{2\\pi(\\sigma^2 + s_d^2)}} 
+       \\hat{L}(m|d) = \\frac{1}{\\sqrt{2\\pi(\\sigma^2 + s_d^2)}} 
        \\exp\\left[-\\frac{(m - \\mu_d)^2}{2(\\sigma^2 + s_d^2)}\\right]
        $$
        where \\( \\mu_d \\) and \\( s_d \\) are the mean and std of BNN predictions.
 
     3. **IntCal20 Calibration Curve**
        $$
-       L(m|d) = \\frac{1}{\\sqrt{2\\pi(\\sigma^2 + s_{IntCal20}(d)^2)}} 
+       \\hat{L}(m|d) = \\frac{1}{\\sqrt{2\\pi(\\sigma^2 + s_{IntCal20}(d)^2)}} 
        \\exp\\left[-\\frac{(m - \\mu_{IntCal20}(d))^2}{2(\\sigma^2 + s_{IntCal20}(d)^2)}\\right]
        $$
 
     4. **Exact Gaussian Density**
        $$
-       L(m|d) = \\frac{1}{\\sqrt{2\\pi}\\sigma} 
+       L(m|d) = \\hat{L}(m|d) = \\frac{1}{\\sqrt{2\\pi}\\sigma} 
        \\exp\\left[-\\frac{(m - f(d))^2}{2\\sigma^2}\\right]
        $$
 
     Examples
     --------
     >>> density_fn = _mono_cal_date_approx_density_on_middle_points_(
-    ...     mesure=1.7,
-    ...     lab_error=0.0045,
+    ...     mesure=0.954,
+    ...     lab_error=0.002,
     ...     bnn_model=my_bnn,
     ...     nb_curves=200,
     ...     mesure_likelihood="curve_gaussian_approximation"
@@ -272,26 +285,37 @@ def _mono_cal_date_approx_density_on_middle_points_(
     """
     # vérification paramètres
     if bnn_model == None and type(middle_points_predictions) == 'NoneType' :
-        raise ValueError("au moins l'un des arguments 'bnn_model' ou 'middle_points_predictions' doit être fourni (!= None)")
+        raise ValueError(
+            "At least one of 'bnn_model' or 'middle_points_predictions' must be provided (not None)."
+        )
     
     if type(middle_points_predictions) != 'NoneType' and type(middle_points_predictions) != np.ndarray :
-        raise ValueError("'middle_points_predictions' doit être de type 'numpy.ndarray' quand il est fourni")
+        raise ValueError(
+            "'middle_points_predictions' must be of type numpy.ndarray when provided."
+        )
     
     # traitement de la densité à piori :
     if prior_density == "default" :
         support_lower_bound = 0. # à remplacer par min_Xtrain ou min_Xtrain_val ou min_Xtrain_val_test plus tard suivant le cas ou date minimale gobale possible pour la calibration
         support_upper_bound = 1. # à remplacer par max_Xtrain ou max_Xtrain_val ou max_Xtrain_val_test plus tard suivant le cas ou date maximale gobale possible pour la calibration
-        prior_density = lambda d : np.float64((support_lower_bound <= d) * (d <= support_upper_bound))/(support_upper_bound - support_lower_bound)
     else :
         support_lower_bound = prior_density[0]
         support_upper_bound = prior_density[1]
         #raise NotImplementedError("La densité à piori fournie sur les dates n'est pas encore supportée")
+    prior_density = lambda d: np.float64((support_lower_bound <= d) * (d <= support_upper_bound)) / (
+            support_upper_bound - support_lower_bound
+        )
         
     # predictions avec le modèle
     if type(middle_points_predictions) != 'NoneType' :
         predicted = lambda d : middle_points_predictions
     else : 
-        predicted = lambda d : bnn_make_predictions_(bnn_model = bnn_model, X_test = d.reshape((-1,1)), iterations = nb_curves, batch_size = batch_size)
+        predicted = lambda d : bnn_make_predictions_(
+            bnn_model = bnn_model, 
+            X_test = d.reshape((-1,1)), 
+            iterations = nb_curves, 
+            batch_size = batch_size
+        )
     
     # densité approchée (connue à une constante près)
     mesure_likelihood_possible_values = [
@@ -329,7 +353,7 @@ def _mono_cal_date_approx_density_on_middle_points_(
         # conditionnellement à la date d
         if true_regression_function == None :
             raise ValueError(
-                f"'true_regression_function' doit être fourni lorsque \n 'mesure_likelihood' vaut '{mesure_likelihood_possible_values[2]}'"
+                f"'true_regression_function' must be provided when \n 'mesure_likelihood' is '{mesure_likelihood_possible_values[2]}'."
             )
         density = lambda d : prior_density(d) * np.exp(
             -(mesure - true_regression_function(d))**2 / (2*lab_error**2)
@@ -337,7 +361,7 @@ def _mono_cal_date_approx_density_on_middle_points_(
     
     else :
         raise ValueError(
-            f"'mesure_likelihood' doit être un élément de la liste \n{mesure_likelihood_possible_values}"
+            f"'mesure_likelihood' must be one of: \n{mesure_likelihood_possible_values}"
         )
         
     return density
