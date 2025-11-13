@@ -371,7 +371,86 @@ def _mono_cal_date_approx_density_on_middle_points_(
 
 # version calibration simultanée de plusieurs dates
 
-def multi_cal_date_approx_density(mesures, lab_errors, bnn_model, nb_curves=100, prior_density="default", batch_size = None):
+def multi_cal_date_approx_density(
+    mesures: np.ndarray,
+    lab_errors: np.ndarray,
+    bnn_model: object,
+    nb_curves: int = 100,
+    prior_density: Union[str, Callable[[np.ndarray], np.ndarray]] = "default",
+    batch_size: Optional[int] = None
+) -> Callable[[np.ndarray], np.ndarray]:
+    """
+    Approximate the joint posterior density for multiple radiocarbon dates.
+
+    This function generalizes the single-date calibration approach to the case 
+    where several radiocarbon dates are calibrated simultaneously.  
+    It computes an approximate joint posterior density over the vector of 
+    (scaled) calendar dates, using a trained Bayesian Neural Network (BNN) model 
+    as an estimator of the calibration curve in the F¹⁴C domain.
+
+    Parameters
+    ----------
+    mesures : np.ndarray of shape (n_dates,)
+        The measured radiocarbon ages expressed in the F¹⁴C domain.
+    lab_errors : np.ndarray of shape (n_dates,)
+        The laboratory measurement uncertainties (standard deviations), 
+        also expressed in the F¹⁴C domain.
+    bnn_model : object
+        The trained Bayesian Neural Network model used to estimate the predictive distribution.  
+        Must be compatible with `bnn_make_predictions_` and approximate the calibration curve in the F¹⁴C domain.
+    nb_curves : int, optional
+        Number of stochastic realizations (Monte Carlo samples) to use for 
+        approximating the BNN predictive distribution.  
+        Default is `100`.
+    prior_density : {"default", callable}, optional
+        Prior probability density over the vector of scaled calendar dates.  
+        - `"default"`: a uniform prior over the hypercube `[0, 1]^n_dates`.  
+        - `callable`: a custom prior density function of the form `f(dates) → np.ndarray`.  
+        Default is `"default"`.
+    batch_size : int, optional
+        Batch size for model predictions, passed to the internal 
+        `bnn_make_predictions_` function.  
+        Default is `None`.
+
+    Returns
+    -------
+    density : callable
+        A function `density(dates: np.ndarray) -> np.ndarray` that computes 
+        the (unnormalized) approximate **joint posterior density** of calibrated dates.  
+        Each row in `dates` corresponds to one vector of scaled calendar dates.  
+        The density is known up to a normalization constant.
+
+    Notes
+    -----
+    - The posterior density is proportional to:  
+      \\( p(\\mathbf{d}|\\mathbf{m}) ∝ p(\\mathbf{d}) × E_{BNN}[ \\prod_i \\exp(-(m_i - \\hat{F}^{14}C(d_i))^2 / (2σ_i^2)) ] \\).  
+      The expectation over the BNN distribution is approximated by Monte Carlo averaging.
+    - The `"default"` prior corresponds to a uniform independent prior over each scaled date in `[0, 1]`.
+    - The output density is **not normalized**; handling normalization here via numerical integration over a 
+        multi-dimensional grid is not a good idea because of the curse of dimensionality. In general, trying 
+        to do so will not be necessary because the outputs densities are expected to be used within 
+        a MCMC sampler (e.g. Metropolis-Hastings within Gibbs sampler).
+
+    Raises
+    ------
+    NotImplementedError
+        If a non-default prior density is provided (custom priors are not yet supported).
+
+    Examples
+    --------
+    >>> mesures = np.array([0.954, 0.928])
+    >>> lab_errors = np.array([0.002, 0.003])
+    >>> density_fn = multi_cal_date_approx_density(
+    ...     mesures=mesures,
+    ...     lab_errors=lab_errors,
+    ...     bnn_model=my_trained_bnn,
+    ...     nb_curves=200
+    ... )
+    >>> date_grid = np.random.rand(100, 2)  # 100 candidate date vectors
+    >>> posterior_vals = density_fn(date_grid)
+    >>> posterior_vals.shape
+    (100,)
+    """
     
     dim_dates = mesures.shape[0] # = len(mesures)
     # traitement de la densité à piori :
@@ -380,7 +459,9 @@ def multi_cal_date_approx_density(mesures, lab_errors, bnn_model, nb_curves=100,
         support_upper_bound = np.array([1.] * dim_dates) # à remplacer par max_Xtrain ou max_Xtrain_val ou max_Xtrain_val_test plus tard suivant le cas ou date maximale gobale possible pour la calibration
         prior_density = lambda d : np.float64((support_lower_bound <= d) * (d <= support_upper_bound)).prod(axis=1)/(support_upper_bound - support_lower_bound).prod()
     else :
-        raise NotImplementedError("La densité a piori fournie sur les dates n'est pas encore supportée")
+        raise NotImplementedError(
+            "Custom prior densities for multiple dates are not yet supported."
+        )
         
     # predictions avec le modèle
     # d sera une matrice (un array 2-D numpy) dont chaque ligne correspond à un vecteur de dates sur lequel sera évaluée la densité jointe
