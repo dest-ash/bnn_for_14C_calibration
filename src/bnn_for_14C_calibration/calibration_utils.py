@@ -137,13 +137,139 @@ def mono_cal_date_approx_density(
 # la rapidité des calculs en cas de plusieurs calibrations avec la même subdivision de l'intervalle [0,1]
 
 def _mono_cal_date_approx_density_on_middle_points_(
-    mesure, lab_error, bnn_model=None, middle_points_predictions=None, 
-    nb_curves=100, prior_density="default", batch_size = None,
-    mesure_likelihood = [
-        "gaussian_mixture", "curve_gaussian_approximation", "IntCal20", "exact_gaussian_density"
-    ][0], # par défaut : "gaussian_mixture"
-    true_regression_function = None # à définir obligatoirement si mesure_likelihood = "exact_gaussian_density"
-):
+    mesure: float,
+    lab_error: float,
+    bnn_model: Optional[object] = None,
+    middle_points_predictions: Optional[np.ndarray] = None,
+    nb_curves: int = 100,
+    prior_density: Union[str, Tuple[float, float]] = "default",
+    batch_size: Optional[int] = None,
+    mesure_likelihood: str = [
+        "gaussian_mixture",
+        "curve_gaussian_approximation",
+        "IntCal20",
+        "exact_gaussian_density"
+    ][0],  # par défaut : "gaussian_mixture"
+    true_regression_function: Optional[Callable[[np.ndarray], np.ndarray]] = None
+) -> Callable[[np.ndarray], np.ndarray]:
+    """
+    Approximate the posterior density for a single radiocarbon measurement using 
+    precomputed predictions or a Bayesian Neural Network (BNN) model.
+
+    This function extends `mono_cal_date_approx_density` to handle the case where
+    the predictions of the calibration model at middle points are **already precomputed**.
+    This optimization is particularly useful when several radiocarbon dates are calibrated
+    using the same subdivision of the scaled calendar-age domain `[0, 1]`, 
+    avoiding repeated BNN evaluations.
+
+    Different formulations of the measurement likelihood can be selected via 
+    the `mesure_likelihood` parameter.
+
+    Parameters
+    ----------
+    mesure : float
+        The measured radiocarbon age (expressed in the F¹⁴C domain).
+    lab_error : float
+        The measurement uncertainty (standard deviation) from the laboratory (in the F¹⁴C domain).
+    bnn_model : object, optional
+        Trained Bayesian Neural Network model estimating the calibration curve.
+        Must be compatible with `bnn_make_predictions_` and predictions expressed in the F¹⁴C domain.  
+        Required if `middle_points_predictions` is not provided.
+    middle_points_predictions : np.ndarray, optional
+        Precomputed predictions (in the F¹⁴C domain) of the calibration model evaluated at middle points
+        of the scaled date domain `[0, 1]`.  
+        Expected shapes:  
+        - For `"gaussian_mixture"` or `"curve_gaussian_approximation"`: `(n_points, n_curves)`  
+        - For `"IntCal20"`: `(2, n_points)` where the first row is the mean curve 
+          and the second row is the standard deviation.
+    nb_curves : int, optional
+        Number of stochastic realizations of the BNN used to approximate the predictive
+        distribution when `bnn_model` is provided. Default is `100`.
+    prior_density : {"default", (float, float)}, optional
+        Prior probability density on the date domain.  
+        - `"default"`: uniform prior over `[0, 1]`.  
+        - `(min_val, max_val)`: uniform prior over a custom interval.  
+        Default is `"default"`.
+    batch_size : int, optional
+        Batch size used for `bnn_make_predictions_` when computing BNN outputs.
+    mesure_likelihood : {"gaussian_mixture", "curve_gaussian_approximation", "IntCal20", "exact_gaussian_density"}, optional
+        Defines the model used for the likelihood term :  
+        - `"gaussian_mixture"`: mixture of Gaussians based on BNN stochastic outputs.  
+        - `"curve_gaussian_approximation"`: Gaussian approximation of the mixture 
+          (Central Limit Theorem approximation).  
+        - `"IntCal20"`: uses IntCal20 mean and variance directly.  
+        - `"exact_gaussian_density"`: true deterministic Gaussian likelihood.  
+        Default is `"gaussian_mixture"`.
+    true_regression_function : callable, optional
+        True regression function `f(d)` required when `mesure_likelihood="exact_gaussian_density"`.
+        Must return the predicted F¹⁴C values for given scaled dates.
+
+    Returns
+    -------
+    density : callable
+        Function `density(dates: np.ndarray) -> np.ndarray` that computes the (unnormalized) 
+        posterior density of (scaled) calendar dates given the radiocarbon measurement.
+
+    Notes
+    -----
+    - This function is designed for **computational efficiency** when multiple 
+      calibrations share the same domain discretization.
+    - The prior is currently **uniform**, but this can be extended in later implementations.
+    - When `"exact_gaussian_density"` is used, a deterministic regression function must be supplied.
+    - The returned density is **not normalized**; normalization should be applied externally if needed.
+    - The assumed calibration domain `[0, 1]` corresponds to **scaled calendar ages** obtained 
+      via `minimax_scaling`.
+
+    Mathematical Formulation
+    -------------------------
+    The posterior density is proportional to the product of the prior and the likelihood:
+        $$
+        p(d | m) \\propto p(d) \\times L(m | d)
+        $$
+
+    Depending on the chosen `mesure_likelihood`, the likelihood term \\( L(m | d) \\) is given by:
+
+    1. **Gaussian Mixture Approximation**
+       $$
+       L(m|d) = \\frac{1}{N} \\sum_{i=1}^N 
+       \\frac{1}{\\sqrt{2\\pi}\\sigma} 
+       \\exp\\left[-\\frac{(m - \\hat{m}_i(d))^2}{2\\sigma^2}\\right]
+       $$
+       where \\( \\hat{m}_i(d) \\) are stochastic predictions from the BNN.
+
+    2. **Curve Gaussian Approximation (Central Limit Theorem)**
+       $$
+       L(m|d) = \\frac{1}{\\sqrt{2\\pi(\\sigma^2 + s_d^2)}} 
+       \\exp\\left[-\\frac{(m - \\mu_d)^2}{2(\\sigma^2 + s_d^2)}\\right]
+       $$
+       where \\( \\mu_d \\) and \\( s_d \\) are the mean and std of BNN predictions.
+
+    3. **IntCal20 Calibration Curve**
+       $$
+       L(m|d) = \\frac{1}{\\sqrt{2\\pi(\\sigma^2 + s_{IntCal20}(d)^2)}} 
+       \\exp\\left[-\\frac{(m - \\mu_{IntCal20}(d))^2}{2(\\sigma^2 + s_{IntCal20}(d)^2)}\\right]
+       $$
+
+    4. **Exact Gaussian Density**
+       $$
+       L(m|d) = \\frac{1}{\\sqrt{2\\pi}\\sigma} 
+       \\exp\\left[-\\frac{(m - f(d))^2}{2\\sigma^2}\\right]
+       $$
+
+    Examples
+    --------
+    >>> density_fn = _mono_cal_date_approx_density_on_middle_points_(
+    ...     mesure=1.7,
+    ...     lab_error=0.0045,
+    ...     bnn_model=my_bnn,
+    ...     nb_curves=200,
+    ...     mesure_likelihood="curve_gaussian_approximation"
+    ... )
+    >>> ages = np.linspace(0, 1, 1000)
+    >>> posterior_vals = density_fn(ages)
+    >>> posterior_vals.shape
+    (1000,)
+    """
     # vérification paramètres
     if bnn_model == None and type(middle_points_predictions) == 'NoneType' :
         raise ValueError("au moins l'un des arguments 'bnn_model' ou 'middle_points_predictions' doit être fourni (!= None)")
