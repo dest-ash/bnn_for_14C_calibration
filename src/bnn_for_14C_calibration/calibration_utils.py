@@ -8,7 +8,7 @@ from typing import (
     Optional,
     Union,
     # List,
-    # Tuple,
+    Tuple,
     Callable
 )
 
@@ -41,7 +41,7 @@ def mono_cal_date_approx_density(
         The measured radiocarbon age (expressed in the F$^{14}$C domain).
     lab_error : float
         The measurement uncertainty (standard deviation) associated with the lab measurement 
-        (also in the F$\^{14}$C domain).
+        (also in the F$^{14}$C domain).
     bnn_model : object
         The trained Bayesian Neural Network model used to estimate the predictive distribution.  
         Must be compatible with `bnn_make_predictions_`.  
