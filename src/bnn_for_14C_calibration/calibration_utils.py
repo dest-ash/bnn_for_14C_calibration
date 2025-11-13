@@ -38,14 +38,14 @@ def mono_cal_date_approx_density(
     Parameters
     ----------
     mesure : float
-        The measured radiocarbon age (converted in the $\Delta^{14}$C domain).
+        The measured radiocarbon age (expressed in the F$^{14}$C domain).
     lab_error : float
         The measurement uncertainty (standard deviation) associated with the lab measurement 
-        (also in the $\Delta^{14}$C domain).
+        (also in the F$\^{14}$C domain).
     bnn_model : object
         The trained Bayesian Neural Network model used to estimate the predictive distribution.  
         Must be compatible with `bnn_make_predictions_`.  
-        This model must be an estimate of the radiocarbon calibration curve in the $\Delta^{14}$C domain.
+        This model must be an estimate of the radiocarbon calibration curve in the F$^{14}$C domain.
     nb_curves : int, optional
         Number of stochastic realizations (Monte Carlo samples) to use for 
         approximating the BNN predictive distribution.  
@@ -85,8 +85,8 @@ def mono_cal_date_approx_density(
     Examples
     --------
     >>> density_fn = mono_cal_date_approx_density(
-    ...     mesure=110,
-    ...     lab_error=15,
+    ...     mesure=1.7,
+    ...     lab_error=0.0045,
     ...     bnn_model=my_trained_bnn,
     ...     nb_curves=200
     ... )
