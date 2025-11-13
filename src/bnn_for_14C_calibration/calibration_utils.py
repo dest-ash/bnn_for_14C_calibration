@@ -3,28 +3,131 @@
 
 import numpy as np
 
+from typing import (
+    # Literal,
+    Optional,
+    Union,
+    # List,
+    # Tuple,
+    Callable
+)
+
 # =============================================================================
 # approximation de la densité a posteriori des dates calibrées
 # =============================================================================
 
 # version calibration individuelle d'une seule date
 
-def mono_cal_date_approx_density(mesure, lab_error, bnn_model, nb_curves=100, prior_density="default", batch_size = None):
+def mono_cal_date_approx_density(
+    mesure: float,
+    lab_error: float,
+    bnn_model: object,
+    nb_curves: int = 100,
+    prior_density: Union[str, Callable[[np.ndarray], np.ndarray]] = "default",
+    batch_size: Optional[int] = None
+) -> Callable[[np.ndarray], np.ndarray]:
+    """
+    Approximate the posterior density function for a single radiocarbon date calibration.
+
+    This function computes an approximate posterior density for a given measured 
+    radiocarbon date using a trained Bayesian Neural Network (BNN) model.  
+    The approximation is done by sampling multiple stochastic realizations of 
+    the BNN predictions and combining them with a likelihood term based on 
+    the laboratory measurement error.
+
+    Parameters
+    ----------
+    mesure : float
+        The measured radiocarbon age (converted in the $\Delta^{14}$C domain).
+    lab_error : float
+        The measurement uncertainty (standard deviation) associated with the lab measurement 
+        (also in the $\Delta^{14}$C domain).
+    bnn_model : object
+        The trained Bayesian Neural Network model used to estimate the predictive distribution.  
+        Must be compatible with `bnn_make_predictions_`.  
+        This model must be an estimate of the radiocarbon calibration curve in the $\Delta^{14}$C domain.
+    nb_curves : int, optional
+        Number of stochastic realizations (Monte Carlo samples) to use for 
+        approximating the BNN predictive distribution.  
+        Default is `100`.
+    prior_density : {"default", callable}, optional
+        Prior probability density over the date domain.  
+        - `"default"`: a uniform prior over `[0, 1]`, the range of the scaled dates.  
+        - `callable`: a custom prior density function of the form `f(dates) → np.ndarray`.  
+        Default is `"default"` (the only possibility supported presently).
+    batch_size : int, optional
+        Batch size for model predictions, passed to the internal 
+        `bnn_make_predictions_` function.  
+        Default is `None`.
+
+    Returns
+    -------
+    density : callable
+        A function `density(dates: np.ndarray) -> np.ndarray` that computes 
+        the (unnormalized) approximate posterior density of calibrated dates.  
+        The dates given to this function are first scaled using `minimax_scaling` function.  
+        The density is known up to a normalization constant.
+
+    Notes
+    -----
+    - The posterior density is proportional to the product of the prior and the likelihood:  
+      \\( p(d|m) ∝ p(d) × E_{BNN}[ \\exp(-(m - \hat{m}(d))^2 / (2σ^2)) ] \\).  
+      This expectation is approximated by averaging over multiple stochastic 
+      predictions of the BNN model.
+    - The uniform prior currently assumes that the scaled ages' calibration domain is `[0, 1]`;  
+      future implementations should allow to replace this with the actual domain limits or use
+      other values to approximate these limits (e.g. training data domain bounds).  
+      Another implementation improvement may be to make it possible to handle the use of a 
+      `callable` which gives a custom prior density function of the form `f(dates) → np.ndarray`.  
+    - The output density is **not normalized**; normalization must be handled externally 
+      if necessary (e.g., via numerical integration).
+
+    Examples
+    --------
+    >>> density_fn = mono_cal_date_approx_density(
+    ...     mesure=12450.0,
+    ...     lab_error=50.0,
+    ...     bnn_model=my_trained_bnn,
+    ...     nb_curves=200
+    ... )
+    >>> ages = np.linspace(0, 1, 500)
+    >>> posterior_vals = density_fn(ages)
+    >>> posterior_vals.shape
+    (500,)
+
+    """
     
-    # traitement de la densité à piori :
-    if prior_density == "default" :
-        support_lower_bound = 0. # à remplacer par min_Xtrain ou min_Xtrain_val ou min_Xtrain_val_test plus tard suivant le cas ou date minimale gobale possible pour la calibration
-        support_upper_bound = 1. # à remplacer par max_Xtrain ou max_Xtrain_val ou max_Xtrain_val_test plus tard suivant le cas ou date maximale gobale possible pour la calibration
-        prior_density = lambda d : np.float64((support_lower_bound <= d) * (d <= support_upper_bound))/(support_upper_bound - support_lower_bound)
-    else :
-        raise NotImplementedError("La densité a piori fournie sur les dates n'est pas encore supportée")
-        
+    # traitement de la densité à priori :
+    if prior_density == "default":
+        # à remplacer par min_Xtrain ou min_Xtrain_val ou min_Xtrain_val_test plus tard suivant le cas
+        # ou date minimale globale possible pour la calibration
+        support_lower_bound = 0.0
+        # à remplacer par max_Xtrain ou max_Xtrain_val ou max_Xtrain_val_test plus tard suivant le cas
+        # ou date maximale globale possible pour la calibration
+        support_upper_bound = 1.0
+
+        prior_density = lambda d: np.float64(
+            (support_lower_bound <= d) * (d <= support_upper_bound)
+        ) / (support_upper_bound - support_lower_bound)
+
+    else:
+        raise NotImplementedError(
+            "The provided prior density over dates is not yet supported."
+        )
+
     # predictions avec le modèle
-    predicted = lambda d : bnn_make_predictions_(bnn_model = bnn_model, X_test = d.reshape((-1,1)), iterations = nb_curves, batch_size = batch_size)
-    
+    predicted = lambda d: bnn_make_predictions_(
+        bnn_model=bnn_model,
+        X_test=d.reshape((-1, 1)),
+        iterations=nb_curves,
+        batch_size=batch_size,
+    )
+
     # densité approchée (connue à une constante près)
-    density = lambda d : prior_density(d) * np.exp(-(mesure - predicted(d))**2/(2*lab_error**2)).mean(axis=1, dtype=np.float64) / (lab_error * np.sqrt(2*np.pi))
-    
+    density = lambda d: prior_density(d) * np.exp(
+        -(mesure - predicted(d)) ** 2 / (2 * lab_error**2)
+    ).mean(axis=1, dtype=np.float64) / (lab_error * np.sqrt(2 * np.pi))
+
     return density
 
 
