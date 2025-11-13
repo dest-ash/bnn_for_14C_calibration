@@ -85,8 +85,8 @@ def mono_cal_date_approx_density(
     Examples
     --------
     >>> density_fn = mono_cal_date_approx_density(
-    ...     mesure=12450.0,
-    ...     lab_error=50.0,
+    ...     mesure=110,
+    ...     lab_error=15,
     ...     bnn_model=my_trained_bnn,
     ...     nb_curves=200
     ... )
@@ -134,7 +134,7 @@ def mono_cal_date_approx_density(
 
 # rédéfinition de la fonction mono_cal_date_approx_density pour les points milieux afin de tenir
 # compte du cas où les prédictions aux points milieux sont déjà pré-calculés pour améliorer
-# la rapidité des calculs en cas de plusieurs calibrations avec la même subdivision de l'intervalle [a,b]
+# la rapidité des calculs en cas de plusieurs calibrations avec la même subdivision de l'intervalle [0,1]
 
 def _mono_cal_date_approx_density_on_middle_points_(
     mesure, lab_error, bnn_model=None, middle_points_predictions=None, 
