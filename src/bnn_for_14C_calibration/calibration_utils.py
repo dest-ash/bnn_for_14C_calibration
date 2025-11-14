@@ -641,16 +641,142 @@ def _multi_cal_date_approx_density_(
 # simulation suivant la densité (approchée) a posteriori des dates calibrées
 # =============================================================================
 
-def mono_cal_date_approx_density_sample(density=None, nb_intervals=1000, support_bounds=(0,1), subdivision_components=None, sample_size=1):
+def mono_cal_date_approx_density_sample(
+    density: Optional[Callable[[np.ndarray], np.ndarray]] = None,
+    nb_intervals: int = 1000,
+    support_bounds: Tuple[float, float] = (0.0, 1.0),
+    subdivision_components: Optional[
+        Tuple[np.ndarray, np.ndarray, np.ndarray]
+    ] = None,
+    sample_size: int = 1
+) -> Tuple[np.ndarray, np.ndarray, np.ndarray]:
+    """
+    Draw samples from an univariate, unnormalized posterior density using a 
+    piecewise-constant approximation over a regular grid.
+
+    This function is typically used in Bayesian radiocarbon calibration to draw
+    samples from the approximate posterior distribution of a **single** calibrated
+    date, when the posterior density is only available up to a multiplicative
+    constant or when *direct* numerical integration is not desirable.
+
+    Parameters
+    ----------
+    density : callable or None
+        A function evaluating the unnormalized posterior density on an array
+        of points. Required unless `subdivision_components` is supplied.
+
+    nb_intervals : int
+        Number of subintervals defining the grid approximation of the density.
+
+    support_bounds : tuple of float
+        Lower and upper bounds of the support. Only (0, 1) is currently supported.
+
+    subdivision_components : tuple of numpy.ndarray or None
+        Optional tuple (interval_bounds, midpoints, midpoint_densities).
+        If provided, these arrays are reused directly.
+
+    sample_size : int
+        Number of posterior samples to generate.
+
+    Returns
+    -------
+    tuple
+        A tuple (d, unnorm_prob, norm_prob) with:  
+            - d : `ndarray of shape (sample_size,)`, 
+                the generated samples.  
+            - unnorm_prob : `ndarray of shape (sample_size,)`, 
+                the unnormalized density values at the selected midpoints.  
+            - norm_prob : `ndarray of shape (sample_size,)`, 
+                the normalized discrete probabilities associated with the chosen intervals 
+                (see the notes below).  
+
+    Notes
+    -----
+    **1. Posterior density availability**
+        
+        The function assumes that the posterior density `p(d | m)` is only known
+        through an unnormalized function:
+
+            f(d) ∝ p(d | m)
+
+        This is the case when the density results from Monte Carlo averaging over a
+        Bayesian Neural Network (BNN), where:
+
+            f(d) = p(d) × E_BNN[ exp(-(m - F¹⁴C(d))² / (2σ²)) ] / (σ √(2π))
+
+        Since the density is unnormalized, classical continuous inversion sampling 
+        is not possible. Instead, a piecewise-constant discretization is used.
+
+    **2. Numerical approximation**
+        
+        The interval [0, 1] is subdivided into `nb_intervals` equal subintervals.
+        On each subinterval, the density is approximated by its midpoint value:
+
+            f(d) ≈ f(d_j*)   for d in interval j
+
+        yielding discrete weights:
+
+            p_j = f(d_j*) / Σ_k f(d_k*)
+
+        which define a categorical distribution over the intervals.
+
+    **3. Sampling algorithm**
+        
+        Sampling is performed as follows:
+
+        1. Compute (or reuse) midpoints `d_j*` and their unnormalized densities.
+        2. Normalize these densities to obtain probabilities over subintervals.
+        3. Draw an interval index J according to these probabilities.
+        4. Draw a uniform sample on the chosen interval:
+
+               d ~ Uniform(interval_bounds[J-1], interval_bounds[J])
+
+        This yields samples approximately distributed according to the target
+        posterior density.
+
+    **4. Precomputed subdivision**  
+
+        If `subdivision_components = (bounds, midpoints, densities)` is supplied,
+        the function skips all density evaluations and directly reuses the
+        piecewise-constant representation.  
+        This is useful when repeatedly sampling from the same density is needed, 
+        e.g. inside an MCMC procedure.
+
+    **5. Support and limitations**
+
+        - Only the default support (0, 1) is currently implemented.
+        - The method is *univariate*.  
+          Multivariate posterior sampling must instead rely on MCMC (e.g. 
+          Metropolis–Hastings within Gibbs), since grid-based density approximation 
+          in higher dimension is impractical due to the curse of dimensionality.
+        - The density is never normalized by continuous integration (on purpose),
+          this yields a converging approximation of f(d) when the number of subintervals,
+          `nb_intervals`, tends to infinity.
+    
+    Examples
+    --------
+    >>> density = lambda x: np.exp(-(x-0.4)**2 / 0.01)
+    >>> d, f_unnorm, f_norm = mono_cal_date_approx_density_sample(
+    ...     density=density, 
+    ...     sample_size=5
+    ... )
+    """
+
     # traitement du support et contrôle des arguments fournis
     if support_bounds != (0,1) :
-        raise NotImplementedError("Le support fourni n'est pas encore supporté")
+        raise NotImplementedError(
+            "Only support (0,1) is currently supported."
+        )
         
     if density == None and subdivision_components == None :
-        raise ValueError("au moins l'un des arguments 'density' ou 'subdivision_components' doit être fourni (!= None)")
+        raise ValueError(
+            "At least one of 'density' or 'subdivision_components' must be provided."
+        )
         
     if subdivision_components != None and len(subdivision_components) != 3 :
-        raise ValueError("'subdivision_components' doit être un tuple ou une liste de taille 3 contenant 3 arrays : celui des bornes de sous intervalles, de points milieux et de densités aux points milieux")
+        raise ValueError(
+            "'subdivision_components' must be a tuple of three arrays: bounds, midpoints, densities."
+        )
         
     if subdivision_components != None : 
         
