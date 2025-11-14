@@ -1,5 +1,5 @@
 # utils
-Description of general utilities functions: 
+Description of general helper functions: 
 ::: bnn_for_14C_calibration.utils.get_lib_data_paths
     options:
       show_root_heading: true

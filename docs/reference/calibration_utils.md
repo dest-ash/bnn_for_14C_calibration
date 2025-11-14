@@ -1,5 +1,5 @@
 # calibration_utils
-Description of helpers functions for calibration step: 
+Description of helper functions for calibration step: 
 ::: bnn_for_14C_calibration.calibration_utils.mono_cal_date_approx_density
     options:
       show_root_heading: true
@@ -57,6 +57,14 @@ Description of helpers functions for calibration step:
       separate_signature: false
       show_submodules: false
 ::: bnn_for_14C_calibration.calibration_utils.mono_cal_date_discrete_approx_quantile_fct
+    options:
+      show_root_heading: true
+      show_root_toc_entry: false
+      show_if_no_docstring: true
+      show_signature: true
+      separate_signature: false
+      show_submodules: false
+::: bnn_for_14C_calibration.calibration_utils.mono_cal_date_exact_approx_quantile_fct
     options:
       show_root_heading: true
       show_root_toc_entry: false

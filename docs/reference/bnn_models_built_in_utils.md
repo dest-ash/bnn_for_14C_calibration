@@ -1,5 +1,5 @@
 # bnn_models_built_in_utils
-Description of the utilities functions for Bayesian modeling: 
+Description of helper functions for Bayesian modeling: 
 ::: bnn_for_14C_calibration.bnn_models_built_in_utils.gaussian_prior
     options:
       show_root_heading: true
