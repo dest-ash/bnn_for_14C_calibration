@@ -847,9 +847,9 @@ def mono_cal_date_approx_cumulative_fct(
         currently supported. Default is `(0,1)`.
     subdivision_components : tuple or list of three numpy.ndarray, optional
         Precomputed components for the density approximation:  
-            - array of interval bounds  
-            - array of middle points  
-            - array of density values at middle points  
+            - array of interval bounds (length N+1)  
+            - array of middle points  (length N)  
+            - array of density values at middle points  (length N)  
         If provided, `density` is ignored and `nb_intervals` is overrided.
 
     Returns
