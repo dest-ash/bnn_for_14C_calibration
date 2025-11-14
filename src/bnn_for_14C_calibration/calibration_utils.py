@@ -1115,18 +1115,126 @@ def mono_cal_date_approx_vect_cumulative_fct(
 # approximation de la fonction quantile a posteriori des dates calibrées
 # =============================================================================
 
-def mono_cal_date_discrete_approx_quantile_fct(density=None, nb_intervals=1000, support_bounds=(0,1), subdivision_components=None):
+def mono_cal_date_discrete_approx_quantile_fct(
+    density: Optional[Callable[[np.ndarray], np.ndarray]] = None,
+    nb_intervals: int = 1000,
+    support_bounds: Tuple[float, float] = (0, 1),
+    subdivision_components: Optional[
+        Union[
+            Tuple[np.ndarray, np.ndarray, np.ndarray],
+            List[np.ndarray]
+        ]
+    ] = None
+) -> Callable[[float], float]:
+    """
+    Approximate the posterior quantile function for a single calibrated radiocarbon date
+    using a discrete grid derived from the posterior density approximation.
+
+    The quantile returned for a level ``alpha`` is the *closest discrete realization*
+    available on the grid, i.e. the first grid point whose discretized CDF is greater
+    than or equal to ``alpha``. This is a purely discrete approximation, unlike the 
+    continuous quantile obtainable via inversion of a continuous CDF.
+
+    Parameters
+    ----------
+    density : callable, optional
+        A function `density(dates: np.ndarray) -> np.ndarray` computing the 
+        approximate posterior density at given points. Required if `subdivision_components` is None.
+    nb_intervals : int, default=1000
+        Number of subintervals to discretize the support for the density approximation.
+        Ignored if `subdivision_components` is provided.
+    support_bounds : tuple of float, optional
+        Tuple `(min, max)` specifying the bounds of the scaled date support. Only `(0,1)` is
+        currently supported. Default is `(0,1)`.
+    subdivision_components : tuple or list of three numpy.ndarray, optional
+        Precomputed components for the density approximation:  
+            - array of interval bounds (length N+1)  
+            - array of middle points  (length N)  
+            - array of density values at middle points  (length N)  
+        If provided, `density` is ignored.
+
+    Returns
+    -------
+    discrete_alpha_quantile : callable
+        A function `Q(alpha: float) -> float` returning the discrete approximation
+        of the posterior quantile of order ``alpha``.
+
+    Raises
+    ------
+    NotImplementedError
+        If `support_bounds` is not `(0, 1)`.
+    ValueError
+        If neither `density` nor `subdivision_components` are provided, or if
+        `subdivision_components` does not contain exactly three arrays.
+
+    Notes
+    -----
+    **Approximation of the CDF.**  
+    Let the posterior density be approximated on ``nb_intervals`` subintervals
+    by evaluating it at middle points $m_j$ with corresponding values $f_j$. 
+    The cumulative density assigned to a middle point is then written as:
+    $$
+        \\forall j \in \\\{ 1, \cdots, N \\\} \,,
+         F(m_j)
+        = \\dfrac{\\frac{f_j}{2} + \sum_{i=1}^{j-1} f_i}{\sum_{k=1}^N f_k},
+    $$
+
+    where:  
+    - $\sum_{i<j} f_i$ represents the (unnormalized) cumulative probability mass of the intervals 
+      preceding the j-th,  
+    - $f_j/2$ accounts for integrating half of the (piecewise) constant density over the current 
+      interval up to its midpoint.
+
+    This expression **arises directly** from the integration of the *piecewise constant*
+    density implicitly defined by the sampling strategy of the approximate posterior:
+    selecting an interval proportionally to its density and drawing uniformly inside it.
+
+    **Discrete quantile.**  
+    Extending the discretized CDF with values:  
+        - $F = 0$ at the lower bound,  
+        - $F = 1$ at the upper bound,  
+    we obtain an ordered set of cumulative probabilities:
+    $$
+    0 = F_0 < F(m_1) < \dots < F(m_{N}) < F_{N+1} = 1.
+    $$
+
+    The discrete quantile is then defined as:
+    $$
+        Q_{\\text{disc}}(\\alpha)
+        = x_{k} \quad \\text{where } k = \min\\\{ i : F_i \ge \\alpha \\\},
+    $$
+    with $x_k$ the corresponding support point (a midpoint, the lower bound, 
+    or the upper bound).
+
+    This approximation converges to the true quantile as the number of intervals 
+    increases, because the piecewise-constant density and its cumulative sum 
+    are standard Riemann approximations of the continuous density and CDF.
+
+    Examples
+    --------
+    >>> density_fn = mono_cal_date_approx_density(...)
+    >>> q_fn = mono_cal_date_discrete_approx_quantile_fct(density_fn, nb_intervals=2000)
+    >>> q25 = q_fn(0.25)
+    >>> isinstance(q25, float)
+    True
+    """
     
     # traitement du support et contrôle des arguments fournis
     if support_bounds != (0,1) :
-        raise NotImplementedError("Le support fourni n'est pas encore supporté")
+        raise NotImplementedError(
+            "Only the default support (0,1) is currently supported"
+        )
         
     if density == None and subdivision_components == None :
-        raise ValueError("au moins l'un des arguments 'density' ou 'subdivision_components' doit être fourni (!= None)")
+        raise ValueError(
+            "At least one of 'density' or 'subdivision_components' must be provided (not None)"
+        )
         
     if subdivision_components != None and len(subdivision_components) != 3 :
-        raise ValueError("'subdivision_components' doit être un tuple ou une liste de taille 3 contenant 3 arrays : celui des bornes de sous intervalles, de points milieux et de densités aux points milieux")
-        
+        raise ValueError(
+            "'subdivision_components' must be a tuple or list of length 3 containing arrays: interval bounds, middle points, and densities at middle points"
+        )
+     
     if subdivision_components != None : 
         
         intervals_bounds = subdivision_components[0]
