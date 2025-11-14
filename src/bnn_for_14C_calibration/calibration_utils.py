@@ -1212,7 +1212,12 @@ def mono_cal_date_discrete_approx_quantile_fct(
 
     Examples
     --------
-    >>> density_fn = mono_cal_date_approx_density(...)
+    >>> density_fn = mono_cal_date_approx_density(
+    ...     mesure=0.954,
+    ...     lab_error=0.002,
+    ...     bnn_model=my_trained_bnn,
+    ...     nb_curves=200
+    ... )
     >>> q_fn = mono_cal_date_discrete_approx_quantile_fct(density_fn, nb_intervals=2000)
     >>> q25 = q_fn(0.25)
     >>> isinstance(q25, float)
