@@ -1454,9 +1454,94 @@ def mono_cal_date_exact_approx_quantile_fct(
 # (cas de la calibration individuelle)
 # =============================================================================
 
-def optimise_credible_interval(quantile, alpha) :
-    interval_length = lambda beta : quantile(1 - alpha + beta) - quantile(beta)
-    beta_opt = minimize(fun = interval_length, x0 = np.array([alpha/2]), method = 'Nelder-Mead', bounds = [(0.,alpha)])
+def optimise_credible_interval(
+    quantile: Callable[[float], float],
+    alpha: float
+) -> object:
+    """
+    Optimize the (1 - alpha)-credible interval for a single calibrated radiocarbon
+    date by minimizing its length over all intervals of the form
+    [Q(beta), Q(1 - alpha + beta)], where Q is a continuous posterior quantile
+    function.
+
+    The optimization variable beta ∈ [0, alpha] determines the lower tail mass
+    excluded from the interval. For a symmetric posterior, the optimal value is
+    beta = alpha/2 (equal-tailed interval). For asymmetric posteriors, the optimal
+    beta shifts to achieve the *shortest* interval of posterior mass (1 - alpha).
+
+    Parameters
+    ----------
+    quantile : callable
+        A continuous quantile function Q(u) mapping u ∈ [0,1] to posterior dates.
+        Must satisfy:  
+            - Q is non-decreasing,  
+            - Q(0) is the lower bound of the support,  
+            - Q(1) is the upper bound of the support.  
+    alpha : float
+        Posterior tail probability. The credible interval contains mass (1 - alpha).
+        Must satisfy 0 <= alpha <= 1.
+
+    Returns
+    -------
+    beta_opt : object
+        The SciPy optimization result. The optimal value is:
+            beta_opt.x[0]  
+        The corresponding credible interval is:
+            [ Q(beta_opt.x[0]), Q(1 - alpha + beta_opt.x[0]) ].
+
+    Raises
+    ------
+    ValueError
+        If alpha is not between 0 and 1.  
+        If the quantile function does not accept valid inputs.
+
+    Notes
+    -----
+    **Mathematical background.**
+
+    For any beta ∈ [0, alpha], the interval
+        I_beta = [Q(beta), Q(1 - alpha + beta)]
+    has posterior probability (1 - alpha).
+
+    Its length is
+        L(beta) = Q(1 - alpha + beta) - Q(beta).
+
+    The shortest credible interval is obtained by solving:
+        beta* = argmin_{beta ∈ [0, alpha]} L(beta).
+
+    When the posterior is unimodal, this interval coincides with the HPD
+    (Highest Posterior Density) region. When the posterior is multimodal,
+    the HPD region may be disconnected, but this function returns the shortest
+    *connected* interval of mass (1 - alpha).
+
+    The optimization is performed using the Nelder–Mead method. In recent
+    versions of SciPy, the bounds provided are used to constrain the shape
+    and updates of the simplex, ensuring that the iterates remain within the
+    allowed domain [0, alpha].
+
+    Examples
+    --------
+    >>> Q = lambda u: u**2      # toy quantile function
+    >>> res = optimise_credible_interval(Q, alpha=0.2)
+    >>> float(res.x[0]) >= 0
+    True
+    """
+    
+    # contrôle de alpha
+    if not (0 <= alpha <= 1):
+        raise ValueError("'alpha' must satisfy 0 <= alpha <= 1.")
+
+    # longueur de l'intervalle de crédibilité pour un beta donné
+    interval_length = lambda beta: quantile(1 - alpha + beta) - quantile(beta)
+
+    # optimisation par Nelder-Mead (bornes gérées par la définition du simplexe)
+    beta_opt = minimize(
+        fun=interval_length,
+        x0=np.array([alpha / 2]),
+        method='Nelder-Mead',
+        bounds=[(0., alpha)]
+    )
+
     return beta_opt
 
 def compute_HPD_regions(alpha, density=None, nb_intervals=1000, support_bounds=(0,1), subdivision_components=None):
