@@ -480,24 +480,101 @@ def multi_cal_date_approx_density(
 
 # =============================================================================
 # la densité (approchée) a posteriori des dates calibrées
-# (re-définition de la fonction pour tenir compte du cas où on a une 
-# relation d'ordre sur les dates)
+# (re-définition de la fonction 'multi_cal_date_approx_density' 
+# pour tenir compte du cas où on a une relation d'ordre sur les dates)
 # (on tient aussi compte du cas où les prédictions aux dates 
 # sont déjà disponibles dans le domaine F14C)
+# (on tient également compte du cas où les prédictions aux dates 
+# sont calculées par un bnn_model dans le domaine $\Delta^{14}$C : dans ce cas,
+# les prédictions sont converties automatiquement dans le domaine F14C)
 # =============================================================================
 
 def _multi_cal_date_approx_density_(
-    mesures, lab_errors, 
-    
-    # les valeurs max et min permettant de transformer les dates de [0,1] vers l'intervalle [Min, Max]
-    # utilisé lors de l'entraînement du modèle bayésien
-    Max = None,
-    Min = None,
-    
-    bnn_model=None, nb_curves=100, prior_density="default", 
-    ordered = False,
-    batch_size = None
-):
+    mesures: np.ndarray,
+    lab_errors: np.ndarray,
+    Max: Optional[float] = None,
+    Min: Optional[float] = None,
+    bnn_model: Optional[object] = None,
+    nb_curves: int = 100,
+    prior_density: str = "default",
+    ordered: bool = False,
+    batch_size: Optional[int] = None
+) -> Callable[..., np.ndarray]:
+    """
+    Approximate the joint posterior density for the calibration of multiple radiocarbon
+    dates, optionally incorporating an ordering constraint between the dates and 
+    optionally using precomputed predictions in the F¹⁴C domain.
+
+    This function generalizes the single–date posterior approximation to the 
+    multidimensional case. It allows:  
+    - calibrating several dates simultaneously,  
+    - enforcing a chronological constraint (`ordered=True`),  
+    - using a Bayesian Neural Network (BNN) predicting in the Δ¹⁴C domain and converting 
+      predictions to the F¹⁴C domain internally,  
+    - or alternatively accepting externally precomputed predictions already in the F¹⁴C domain.  
+
+    Parameters
+    ----------
+    mesures : np.ndarray
+        Observed radiocarbon measurements in the F¹⁴C domain. Shape `(n_dates,)`.
+    lab_errors : np.ndarray
+        Standard deviations of laboratory measurement errors for each date. 
+        Must have shape `(n_dates,)`.
+    Max : float, optional
+        Maximum unscaled calendar age used during training of the BNN calibration curve.  
+        Required if `bnn_model` is provided (used for reversing the scaling of input dates).
+    Min : float, optional
+        Minimum unscaled calendar age used during training of the BNN calibration curve.  
+        Required if `bnn_model` is provided (used for reversing the scaling of input dates).
+    bnn_model : object, optional
+        Trained Bayesian Neural Network model predicting Δ¹⁴C.  
+        If not provided, the returned density function expects precomputed predictions 
+        in the F¹⁴C domain.
+    nb_curves : int, optional
+        Number of Monte Carlo draws from the BNN used to approximate predictive 
+        distribution. Default is `100`.
+    prior_density : {"default"}, optional
+        Prior over the scaled dates.  
+        `"default"`: independent uniform prior over `[0,1]` for each date.  
+        No other option is currently supported.
+    ordered : bool, optional
+        If `True`, enforces a strict chronological ordering constraint on the dates:
+        d₀ < d₁ < … < d_{n-1}.  
+        Implemented by multiplying the prior by an indicator function.
+        Default is `False`.
+    batch_size : int, optional
+        Batch size for prediction calls to `bnn_make_predictions_`. Default `None`.
+
+    Returns
+    -------
+    density : callable
+        - If `bnn_model` is provided:  
+          `density(dates: np.ndarray) -> np.ndarray`
+        - If `bnn_model` is None:  
+          `density(dates: np.ndarray, predicted_d: np.ndarray) -> np.ndarray`
+
+        The returned function evaluates an **unnormalized** approximation of the 
+        joint posterior density of the calendar dates.
+
+    Notes
+    -----
+    - The posterior density is proportional to:  
+      \\( p(\\mathbf{d}|\\mathbf{m}) ∝ p(\\mathbf{d}) × E_{BNN}[ \\prod_i \\exp(-(m_i - \\hat{F}^{14}C(d_i))^2 / (2σ_i^2)) ] \\).  
+      The expectation over the BNN distribution is approximated by Monte Carlo averaging.
+    - When `bnn_model` is provided, it predicts Δ¹⁴C values which are internally 
+      converted to F¹⁴C using `d14c_to_f14c`.
+    - The transformation from scaled dates d ∈ [0,1] to calendar ages uses the 
+      inverse minimax scaling defined by the `Min` and `Max` arguments.
+    - The `"default"` prior assumes dates are independently uniform over `[0,1]` 
+      (optionally conditioned on respecting chronological order).
+    - The returned density is **not normalized**.  
+      Normalization in multiple dimensions is not recommended due to the 
+      **curse of dimensionality**, and this density is intended to be used 
+      within an **MCMC sampler** (e.g., Metropolis–Hastings within Gibbs).
+    - For `bnn_model=None`, the user must provide F¹⁴C predictions of shape  
+      `(n_eval_points, n_dates, nb_curves)`.
+
+    """
     
     dim_dates = mesures.shape[0] # = len(mesures)
     # traitement de la densité à piori :
@@ -509,7 +586,9 @@ def _multi_cal_date_approx_density_(
         else : 
             prior_density = lambda d : np.float64(np.argsort(d) == np.arange(dim_dates)).prod(axis=1) * np.float64((support_lower_bound <= d) * (d <= support_upper_bound)).prod(axis=1)/(support_upper_bound - support_lower_bound).prod()
     else :
-        raise NotImplementedError("La densité à piori fournie sur les dates n'est pas encore supportée")
+        raise NotImplementedError(
+            "Custom prior densities are not supported yet."
+        )
         
     # densité approchée (connue à une constante près)
     mesures_broadcasted = mesures.repeat(nb_curves).reshape((-1,nb_curves))
@@ -517,7 +596,9 @@ def _multi_cal_date_approx_density_(
     
     if bnn_model != None :
         if Max == None or Min == None :
-            raise ValueError("Les arguments Max et Min doivent être fournis lorsque bnn_model est fourni")
+            raise ValueError(
+                "Arguments 'Max' and 'Min' must be provided when 'bnn_model' is used."
+            )
         # predictions avec le modèle
         # d sera une matrice (un array 2-D numpy) dont chaque ligne correspond à un vecteur de dates sur lequel est évaluée la densité jointe
         # predicted renvoie un array 2-D de taille (d.shape[0], dim_dates, nb_curves)
