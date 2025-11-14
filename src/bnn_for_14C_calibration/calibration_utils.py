@@ -1271,18 +1271,133 @@ def mono_cal_date_discrete_approx_quantile_fct(
     
     return discrete_alpha_quantile
     
-def mono_cal_date_exact_approx_quantile_fct(density=None, nb_intervals=1000, support_bounds=(0,1), subdivision_components=None):
-    
+def mono_cal_date_exact_approx_quantile_fct(
+    density: Optional[Callable[[np.ndarray], np.ndarray]] = None,
+    nb_intervals: int = 1000,
+    support_bounds: Tuple[float, float] = (0, 1),
+    subdivision_components: Optional[
+        Union[
+            Tuple[np.ndarray, np.ndarray, np.ndarray],
+            List[np.ndarray]
+        ]
+    ] = None
+) -> Callable[[float], float]:
+    """
+    Compute a *continuous* approximation of the posterior quantile function 
+    for a single calibrated radiocarbon date by analytically inverting the
+    piecewise-linear CDF obtained from the piecewise-constant approximation 
+    of the posterior density.
+
+    This contrasts with the *discrete* quantile approximation, which selects
+    the closest grid point. Here, the quantile is obtained by *solving an 
+    affine equation inside the unique interval where the continuous CDF 
+    crosses* ``alpha``.
+
+    Parameters
+    ----------
+    density : callable, optional
+        A function `density(dates: np.ndarray) -> np.ndarray` computing the 
+        approximate posterior density at given points. Required if `subdivision_components` is None.
+    nb_intervals : int, default=1000
+        Number of subintervals to discretize the support for the density approximation.
+        Overrided internally if `subdivision_components` is provided.
+    support_bounds : tuple of float, optional
+        Tuple `(min, max)` specifying the bounds of the scaled date support. Only `(0,1)` is
+        currently supported. Default is `(0,1)`.
+    subdivision_components : tuple or list of three numpy.ndarray, optional
+        Precomputed components for the density approximation:  
+            - array of interval bounds (length N+1)  
+            - array of middle points  (length N)  
+            - array of density values at middle points  (length N)  
+        If provided, `density` is ignored and `nb_intervals` is overrided.
+
+    Returns
+    -------
+    exact_alpha_quantile : callable  
+        A function `Q(alpha: float) -> float` returning the *continuous* 
+        approximate posterior quantile of order ``alpha``.
+
+    Raises
+    ------
+    NotImplementedError
+        If `support_bounds` is not `(0, 1)`.
+    ValueError
+        If neither `density` nor `subdivision_components` are provided, or if
+        `subdivision_components` does not contain exactly three arrays.
+
+    Notes
+    -----
+    **1. Approximate posterior density.**  
+    As in the discrete quantile version, the posterior density is approximated
+    by a piecewise-constant function:
+    $$
+        f(d) \\approx f(m_j) := f_j \quad \\text{for } d \in [x_j, x_{j+1}],
+    $$
+    where $x_j$ are interval bounds and $m_j = \\frac{x_j+x_{j+1}}{2}$ are midpoints.
+
+    **2. Approximate CDF at interval bounds.**  
+    The cumulative probability at the bounds is:
+    $$
+        F(x_j)
+        = \\dfrac{\sum_{i=1}^{j} f_i}{\sum_{k=1}^{N} f_k}.
+    $$
+    These values form a strictly increasing sequence from 0 to 1.
+
+    **3. Continuous quantile: inversion on each interval.**  
+    Inside the interval $[x_j, x_{j+1}]$, the density is constant, hence
+    the CDF is affine:
+    $$
+        F(d) = F(x_j) + \\dfrac{f_j}{\sum_{k=1}^N f_k}\,\\dfrac{d - x_j}{x_{j+1} - x_j}.
+    $$
+    To find the quantile of order $\\alpha$, determine the unique interval where:
+    $$
+        F(x_j) < \\alpha \le F(x_{j+1}),
+    $$
+    and solve for d:
+    $$
+        d = x_j + 
+            \\frac{h}{f_j} \left( \\alpha \sum_{k=1}^N f_k- \sum_{i=1}^{j} f_i \\right)
+            := Q(\\alpha) \, ,
+    $$
+    where $h = x_{j+1} - x_j \, , \quad \\forall j \in \\{ 1, \cdots, N \\}$.
+
+    **4. Difference with the discrete quantile.**  
+    - *Discrete quantile* selects the **closest grid point**.  
+    - *Continuous quantile* solves a **linear equation** inside the interval.  
+    - This yields a *true continuous function* of $\\alpha$ with no jumps.  
+    - Both converge to the exact quantile as the grid is refined, but the
+      continuous version converges faster.
+
+    Examples
+    --------
+    >>> density_fn = mono_cal_date_approx_density(
+    ...     mesure=0.954,
+    ...     lab_error=0.002,
+    ...     bnn_model=my_trained_bnn,
+    ...     nb_curves=200
+    ... )
+    >>> q_fn = mono_cal_date_exact_approx_quantile_fct(density_fn, nb_intervals=2000)
+    >>> q25 = q_fn(0.25)
+    >>> isinstance(q25, float)
+    True
+    """
+   
     # traitement du support et contrôle des arguments fournis
     if support_bounds != (0,1) :
-        raise NotImplementedError("Le support fourni n'est pas encore supporté")
+        raise NotImplementedError(
+            "Only the default support (0,1) is currently supported"
+        )
         
     if density == None and subdivision_components == None :
-        raise ValueError("au moins l'un des arguments 'density' ou 'subdivision_components' doit être fourni (!= None)")
+        raise ValueError(
+            "At least one of 'density' or 'subdivision_components' must be provided (not None)"
+        )
         
     if subdivision_components != None and len(subdivision_components) != 3 :
-        raise ValueError("'subdivision_components' doit être un tuple ou une liste de taille 3 contenant 3 arrays : celui des bornes de sous intervalles, de points milieux et de densités aux points milieux")
-        
+        raise ValueError(
+            "'subdivision_components' must be a tuple or list of length 3 containing arrays: interval bounds, middle points, and densities at middle points"
+        )
+   
     if subdivision_components != None : 
         
         intervals_bounds = subdivision_components[0]
