@@ -944,18 +944,115 @@ def mono_cal_date_approx_cumulative_fct(
     return cumulative_density
 
 
-def mono_cal_date_approx_vect_cumulative_fct(density=None, nb_intervals=1000, support_bounds=(0,1), subdivision_components=None):
-    
-    # traitement du support et contrôle des arguments fournis
+def mono_cal_date_approx_vect_cumulative_fct(
+    density: Optional[Callable[[np.ndarray], np.ndarray]] = None,
+    nb_intervals: int = 1000,
+    support_bounds: Tuple[float, float] = (0, 1),
+    subdivision_components: Optional[Union[Tuple[np.ndarray, np.ndarray, np.ndarray], List[np.ndarray]]] = None
+) -> Callable[[np.ndarray], np.ndarray]:
+    """
+    Vectorized version of `mono_cal_date_approx_cumulative_fct` for approximation 
+    of the posterior cumulative distribution function (CDF)
+    for a single calibrated radiocarbon date.
+
+    This function returns a *vectorized* CDF: it takes an array of scaled dates
+    and returns an array of the same shape containing the corresponding cumulative
+    probabilities.
+
+    The CDF is constructed from either:  
+      - a callable density function `density`, or  
+      - precomputed subdivision components (interval bounds, middle points,
+        densities at middle points).
+
+    As in the scalar version, the continuity of the CDF is a direct mathematical
+    consequence of the sampling strategy: intervals are chosen with probability
+    proportional to their middle–point density, and values inside each interval
+    are drawn uniformly. This implies a linear increase of the CDF inside each
+    interval.
+
+    Parameters
+    ----------
+    density : callable, optional
+        A function `density(dates: np.ndarray) -> np.ndarray` computing the 
+        approximate posterior density at given points. Required if `subdivision_components` is None.
+    nb_intervals : int, default=1000
+        Number of subintervals to discretize the support for the density approximation.
+        Overrided internally if `subdivision_components` is provided.
+    support_bounds : tuple of float, optional
+        Tuple `(min, max)` specifying the bounds of the scaled date support. Only `(0,1)` is
+        currently supported. Default is `(0,1)`.
+    subdivision_components : tuple or list of three numpy.ndarray, optional
+        Precomputed components for the density approximation:  
+            - array of interval bounds (length N+1)  
+            - array of middle points  (length N)  
+            - array of density values at middle points  (length N)  
+        If provided, `density` is ignored and `nb_intervals` is overrided.
+
+    Returns
+    -------
+    cumulative_density : callable
+        A vectorized function:
+            `CDF(dates: np.ndarray) -> np.ndarray` returning the approximate
+            posterior cumulative probabilities for the given dates.
+
+    Raises
+    ------
+    NotImplementedError
+        If `support_bounds` is not `(0, 1)`.
+    ValueError
+        If neither `density` nor `subdivision_components` are provided, or if
+        `subdivision_components` does not contain exactly three arrays.
+
+    Notes
+    -----
+    Let the support $[a,b]$ be subdivided into N intervals $[x_j, x_{j+1}]$ with
+    middle points $m_j = \\frac{x_j + x_{j+1}}{2}$, and let $f_j = density(m_j)$.
+    The approximate $CDF$ at a point $d \in [x_j, x_{j+1}]$ is:
+    $$
+    CDF(d) = \sum_{i=1}^{j-1} \\dfrac{f_i}{\sum_{k=1}^N f_k}  + 
+    \\dfrac{f_j}{\sum_{k=1}^N f_k} \\dfrac{d - x_j}{x_{j+1} - x_j} \\, ,
+    $$  
+    where the first term sums contributions from previous intervals, and the second
+    term accounts for the uniform distribution inside the current interval. 
+
+    The CDF is continuous because the sampling strategy draws uniformly inside
+    the selected interval.
+
+    The vectorized function applies this formula simultaneously to an array of
+    points.  
+
+    Examples
+    --------
+    >>> density_fn = mono_cal_date_approx_density(
+    ...     mesure=0.954,
+    ...     lab_error=0.002,
+    ...     bnn_model=my_trained_bnn,
+    ...     nb_curves=200
+    ... )
+    >>> cdf_fn = mono_cal_date_approx_vect_cumulative_fct(density=density_fn, nb_intervals=1000)
+    >>> scaled_dates = np.array([0.25, 0.5, 0.8])
+    >>> cdf_values = cdf_fn(scaled_dates)
+    >>> cdf_values.shape
+    (3,)
+
+    """  
+
+     # traitement du support et contrôle des arguments fournis
     if support_bounds != (0,1) :
-        raise NotImplementedError("Le support fourni n'est pas encore supporté")
+        raise NotImplementedError(
+            "Only the default support (0,1) is currently supported"
+        )
         
     if density == None and subdivision_components == None :
-        raise ValueError("au moins l'un des arguments 'density' ou 'subdivision_components' doit être fourni (!= None)")
+        raise ValueError(
+            "At least one of 'density' or 'subdivision_components' must be provided (not None)"
+        )
         
     if subdivision_components != None and len(subdivision_components) != 3 :
-        raise ValueError("'subdivision_components' doit être un tuple ou une liste de taille 3 contenant 3 arrays : celui des bornes de sous intervalles, de points milieux et de densités aux points milieux")
-        
+        raise ValueError(
+            "'subdivision_components' must be a tuple or list of length 3 containing arrays: interval bounds, middle points, and densities at middle points"
+        )
+
     if subdivision_components != None : 
         
         intervals_bounds = subdivision_components[0]
