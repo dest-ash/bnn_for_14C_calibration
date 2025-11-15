@@ -68,7 +68,6 @@ bnn_weights_dir = paths_results_dict["bnn_weights_dir"]
 def individual_calibration(
     c14age, c14sig,
     alpha = 0.05, # 1-0.68, #0.05,
-    middle_points_predictions_part_2_filepath = "last_version",
     covariables = False,
     mesure_likelihood = [
         "gaussian_mixture", "curve_gaussian_approximation", "IntCal20", "exact_gaussian_density"
@@ -79,15 +78,14 @@ def individual_calibration(
     
     # chargement des prédictions pré-sauvergardées
     
-    if middle_points_predictions_part_2_filepath == "last_version" :
-        if covariables :
-            filename_part_2 = "bnn_part_2_with_covariables_middle_points_predictions.csv"
-            filename_part_1 = "bnn_part_1_with_covariables_middle_points_predictions.csv"
-        else :
-            filename_part_2 = "bnn_part_2_without_covariables_middle_points_predictions.csv"
-            filename_part_1 = "bnn_part_1_without_covariables_middle_points_predictions.csv"
-        middle_points_predictions_part_2_filepath = bnn_predictions_dir / filename_part_2
-        middle_points_predictions_part_1_filepath = bnn_predictions_dir / filename_part_1
+    if covariables :
+        filename_part_2 = "bnn_part_2_with_covariables_middle_points_predictions.csv"
+        filename_part_1 = "bnn_part_1_with_covariables_middle_points_predictions.csv"
+    else :
+        filename_part_2 = "bnn_part_2_without_covariables_middle_points_predictions.csv"
+        filename_part_1 = "bnn_part_1_without_covariables_middle_points_predictions.csv"
+    middle_points_predictions_part_2_filepath = bnn_predictions_dir / filename_part_2
+    middle_points_predictions_part_1_filepath = bnn_predictions_dir / filename_part_1
         
     
     middle_points_predictions_part_2, nb_intervals_part_2, nb_curves_part_2 = bnn_load_predictions_(
