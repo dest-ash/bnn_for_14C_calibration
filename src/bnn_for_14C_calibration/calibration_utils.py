@@ -10,7 +10,9 @@ from typing import (
     Union,
     List,
     Tuple,
-    Callable
+    Callable,
+    Dict,
+    Any
 )
 
 # =============================================================================
@@ -1544,18 +1546,142 @@ def optimise_credible_interval(
 
     return beta_opt
 
-def compute_HPD_regions(alpha, density=None, nb_intervals=1000, support_bounds=(0,1), subdivision_components=None):
-    
+def compute_HPD_regions(
+    alpha: float,
+    density: Optional[Callable[[np.ndarray], np.ndarray]] = None,
+    nb_intervals: int = 1000,
+    support_bounds: Tuple[float, float] = (0, 1),
+    subdivision_components: Optional[
+        Union[
+            Tuple[np.ndarray, np.ndarray, np.ndarray],
+            List[np.ndarray]
+        ]
+    ] = None
+) -> Dict[str, Any]:
+    """
+    Compute the Highest Posterior Density (HPD) region for a univariate posterior
+    distribution represented by a piecewise-constant density function 
+    on a regular subdivision.
+
+    Let $f$ be a density of the posterior distribution. 
+    Then, the HPD region for credibility level ($1 - \\alpha$) is the set: 
+    $$ 
+        \\text{HPD} = \\\{ x : f(x) \ge k_{1-\\alpha} \\\}
+    $$
+    where $k_{1-\\alpha}$ is the smallest value such that the total posterior mass of the
+    set $\\{ x : f(x) \ge k_{1-\\alpha} \\}$ is at least ($1 - \\alpha$).
+
+    This function approximates the posterior density using midpoint densities on
+    `nb_intervals` sub-intervals. The HPD region may be disconnected; the function returns
+    all connected components of the HPD set.
+
+    Parameters
+    ----------
+    alpha : float
+        Tail probability. The HPD region contains mass (1 - alpha). Must satisfy 0 <= alpha <= 1.
+    density : callable, optional
+        A function `density(dates: np.ndarray) -> np.ndarray` computing the 
+        approximate posterior density at given points.  
+        Required if `subdivision_components` is None.
+    nb_intervals : int, default=1000
+        Number of equal-length subintervals of the support on which the density is
+        approximated as piecewise constant (based on midpoint evaluation).  
+        Required if `subdivision_components` is None.
+    support_bounds : tuple of float, optional
+        Tuple `(min, max)` specifying the bounds of the scaled date support. Only `(0,1)` is
+        currently supported. Default is `(0,1)`.
+    subdivision_components : tuple or list of three numpy.ndarray, optional
+        Precomputed components for the density approximation:  
+            - array of interval bounds (length N+1)  
+            - array of middle points  (length N)  
+            - array of density values at middle points  (length N)  
+        If provided, `density` and `nb_intervals` are ignored.
+
+    Returns
+    -------
+    dict
+        {  
+            "calage_posterior_mode": float,  
+            "calage_posterior_mode_density": float,  
+            "connexe_HPD_intervals": list of [a,b] lists,  
+            "connexe_HPD_intervals_density": list of float,  
+            "HPD_threshold": float  
+        }
+
+    Raises
+    ------
+    NotImplementedError
+        If `support_bounds` is not `(0, 1)`.
+    ValueError
+        If neither `density` nor `subdivision_components` are provided, or if
+        `subdivision_components` does not contain exactly three arrays.
+
+    Notes
+    -----
+    **Piecewise-constant density approximation**
+
+    When the user does not provide `subdivision_components`, the support is subdivided
+    into `nb_intervals` equal-length intervals of width:  
+    $$
+        h = \dfrac{1 - 0}{\\text{nb_intervals}}.
+    $$
+    The posterior density is then approximated as *constant on each interval*, equal to
+    the value at its midpoint. The normalisation is computed via the sum of these
+    midpoint densities, which is mathematically equivalent to a trapezoidal scheme
+    specialised to constant-per-interval densities.
+
+    **Computation of the HPD region**
+
+    Let $(f_i)_{1 \le i \le N}$ be the midpoint densities and let $(I_i)_{1 \le i \le N}$ be 
+    their associated intervals.
+    Sorting the $f_i$ in decreasing order produces a sequence of density levels ordered
+    from the most probable to the least probable regions of the posterior.
+
+    Define the scaled cumulative sum:
+    $$
+        S_k = \\dfrac{f_{(1)} + \cdots + f_{(k)}}{\sum_{i=1}^N f_i},
+    $$
+    where $(j)$ denotes the ordering from largest to smallest. The index $k$ such that:
+    $$
+        S_k \ge 1 - \\alpha
+    $$
+    determines the HPD density threshold:
+    $$
+        k_{1-\\alpha} = \dfrac{f_{(k)}}{\sum_{i=1}^N f_i}.
+    $$
+    All intervals whose midpoint density is equal or greater than $k_{1-\\alpha}$ belong to 
+    the HPD region. Adjacent selected intervals are merged into connected components.
+
+    The function returns:  
+        - the HPD threshold $k_{1-\\alpha}$,  
+        - the connected HPD components expressed in terms of scaled dates
+            (see `minimax_scaling`),  
+        - the (scaled) posterior mode and its density.  
+
+    Examples
+    --------
+    >>> f = lambda x: 2*(1 - x)
+    >>> res = compute_HPD_regions(alpha=0.1, density=f, nb_intervals=1000)
+    >>> "connexe_HPD_intervals" in res
+    True
+    """
+
     # traitement du support et contrôle des arguments fournis
     if support_bounds != (0,1) :
-        raise NotImplementedError("Le support fourni n'est pas encore supporté")
+        raise NotImplementedError(
+            "Only the default support (0,1) is currently supported"
+        )
         
     if density == None and subdivision_components == None :
-        raise ValueError("au moins l'un des arguments 'density' ou 'subdivision_components' doit être fourni (!= None)")
+        raise ValueError(
+            "At least one of 'density' or 'subdivision_components' must be provided (not None)"
+        )
         
     if subdivision_components != None and len(subdivision_components) != 3 :
-        raise ValueError("'subdivision_components' doit être un tuple ou une liste de taille 3 contenant 3 arrays : celui des bornes de sous intervalles, de points milieux et de densités aux points milieux")
-        
+        raise ValueError(
+            "'subdivision_components' must be a tuple or list of length 3 containing arrays: interval bounds, middle points, and densities at middle points"
+        )
+       
     if subdivision_components != None : 
         
         intervals_bounds = subdivision_components[0]
