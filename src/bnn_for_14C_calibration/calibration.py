@@ -472,12 +472,114 @@ def individual_calibration(
 
 
 def IntCal20_calibration(
-    c14age, c14sig,
-    alpha = 0.05, #1-0.68, #0.05,
-    compute_calage_posterior_mean_and_std = False,
-    sample_size = 1000 # à utiliser si compute_calage_posterior_mean_and_std = True
-) :
+    c14age: float,
+    c14sig: float,
+    alpha: float = 0.05,
+    compute_calage_posterior_mean_and_std: bool = False,
+    sample_size: int = 1000
+) -> Dict[str, Any]:
+    """
+    Perform Bayesian calibration of a radiocarbon measurement using the IntCal20 calibration curve.
+
+    Parameters
+    ----------
+    c14age : float
+        Radiocarbon measured age (in BP).
+    c14sig : float
+        Laboratory uncertainty associated with the radiocarbon age (standard deviation, in BP).
+    alpha : float, optional (default = 0.05)
+        Significance level used to compute Highest Posterior Density (HPD) region.
+        The returned region covers posterior probability mass equal to (1 - alpha).
+    compute_calage_posterior_mean_and_std : bool, optional (default = False)
+        If True, posterior samples of the calibrated age are drawn and used to compute:  
+        - posterior mean,  
+        - posterior standard deviation.  
+        If False, the sampling step is skipped.
+    sample_size : int, optional (default = 1000)
+        Number of posterior samples to draw when
+        `compute_calage_posterior_mean_and_std = True`.
+
+    Returns
+    -------
+    results : Dict[str, Any]
+        A dictionary containing:
+        
+        - `connexe_HPD_intervals` : array of HPD intervals in scaled space  
+        - `connexe_HPD_intervals_unscaled` : HPD intervals transformed back into calendar years  
+        - `connexe_HPD_intervals_unscaled_round` : integer-rounded calendar HPD intervals  
+        - `calage_posterior_mode` : posterior mode of the calibrated date (calendar scale)  
+        - `HPD_region_length` : total length (in years) of the HPD region  
+        - `middle_points` : calendar ages at which posterior density was evaluated  
+        - `middle_points_density` : posterior density evaluated at these points  
+        - `calage_posterior_mean` : posterior mean (if computed)  
+        - `calage_posterior_std` : posterior standard deviation (if computed)  
+        - `calage_sample` : posterior sample values (if sampling was performed)  
+        - `alpha` : significance level used  
+        - `c14age`, `c14sig` : the original radiocarbon measurement  
+        - `covariables` : always None for IntCal20 curve
+
+    Notes
+    -----
+    **Calibration model**
+
+    The posterior distribution of the calendar date `d` is:
+    $$
+        p(d | m) \\propto p(d) \\times L(m | d),
+    $$
+    where:  
+        - $m$ is the measured radiocarbon age of std $\sigma$ (in the F14C domain),  
+        - $L(m | d)$ is the measurement-likelihood (Gaussian error model in the F14C domain),  
+        - $p(d)$ is the prior (here uniform over the range covered by IntCal20 calibration curve).  
+    When calibration is done with IntCal20, the likelihood term is estimated by
+    $$
+       \\hat{L}(m|d) = \\frac{1}{\\sqrt{2\\pi(\\sigma^2 + s_{IntCal20}(d)^2)}} 
+       \\exp\\left[-\\frac{(m - \\mu_{IntCal20}(d))^2}{2(\\sigma^2 + s_{IntCal20}(d)^2)}\\right]
+    $$
+    where \\( \\mu_{IntCal20}(d) \\) and \\( s_{IntCal20}(d)\\) are the mean and std published for 
+    the IntCal20 curve (they are interpolated for points where they are not given). This likelihood
+    estimate comes from a Gaussian approximation of the curve obtained by Central Limit Theorem.
+
+    **Approximation and sampling strategy of the posterior distribution**
+
+    The interval covered by IntCal20 is divided into a large number of
+    small intervals (typically one every ≈2 years), and on each interval
+    the posterior density is approximated by piecewise-constant values.
+    This allows:
+
+    - fast HPD region extraction,
+    - deriving a sampling strategy.
+
+    Further description about this can be found in the documentation of
+    `mono_cal_date_approx_density_sample` for example.
+
+    **HPD computation**
+
+    HPD regions are obtained by sorting discretized posterior density values
+    and finding the smallest set of intervals that accumulates posterior mass
+    `(1 - alpha)`.
+
+    **Optional posterior moments**
+
+    If `compute_calage_posterior_mean_and_std=True`:
+
+    - posterior samples are drawn using piecewise-constant inverse transform sampling,  
+    - calendar ages are recovered by inverse scaling,  
+    - sample mean and variance are computed.
+
+    Examples
+    --------
+    >>> out = IntCal20_calibration(2850, 30)
+    >>> out['connexe_HPD_intervals_unscaled_round']
+    array([[ 900, 1020]])
     
+    >>> # Computing posterior mean and standard deviation
+    >>> out = IntCal20_calibration(2850, 30, compute_calage_posterior_mean_and_std=True)
+    >>> out['calage_posterior_mean']
+    960
+    >>> out['calage_posterior_std']
+    42
+    """
+
     # courbe IntCal20
     IntCal20_file_path = IntCal20_dir / "IntCal20_completed.csv"
     IntCal20 = pd.read_csv(IntCal20_file_path, sep =",")
