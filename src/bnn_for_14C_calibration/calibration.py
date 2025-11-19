@@ -42,6 +42,19 @@ from .calibration_utils import (
 from scipy.optimize import minimize
 
 
+from typing import Dict, Any, Tuple, Optional
+from typing import (
+    # Literal,
+    Optional,
+    # Union,
+    # List,
+    Tuple,
+    # Callable,
+    Dict,
+    Any
+)
+
+
 # ========================================================================
 # génération des chemins vers le cache local ou 
 # les données embarquées dans le package
@@ -66,15 +79,121 @@ bnn_weights_dir = paths_results_dict["bnn_weights_dir"]
 
 
 def individual_calibration(
-    c14age, c14sig,
-    alpha = 0.05, # 1-0.68, #0.05,
-    covariables = False,
-    mesure_likelihood = [
-        "gaussian_mixture", "curve_gaussian_approximation", "IntCal20", "exact_gaussian_density"
-    ][0], # par défaut : "gaussian_mixture"
-    compute_calage_posterior_mean_and_std = False,
-    sample_size = 1000 # à utiliser si compute_calage_posterior_mean_and_std = True
-) :
+    c14age: float,
+    c14sig: float,
+    alpha: float = 0.05,
+    covariables: bool = False,
+    mesure_likelihood: str = [
+        "gaussian_mixture", "curve_gaussian_approximation"
+    ][0],
+    compute_calage_posterior_mean_and_std: bool = False,
+    sample_size: int = 1000
+) -> Dict[str, Any]:
+    """
+    Perform an individual (independent) radiocarbon calibration using precomputed 
+    BNN predictions.
+
+    This function loads precomputed midpoint predictions for the two parts of the
+    calibration curve (recent and older parts), constructs a posterior density on a
+    common rescaled time axis, computes the Highest Posterior Density (HPD)
+    region for the calibrated date, and returns a dictionary with results and
+    diagnostics. Optionally, it can also compute Monte Carlo estimates of the
+    posterior mean and standard deviation by sampling from the approximate
+    posterior density.
+
+    Parameters
+    ----------
+    c14age : float
+        The measured radiocarbon age (conventional radiocarbon age) in years BP (Before Present).
+    c14sig : float
+        The 1-sigma measurement uncertainty of `c14age`.
+    alpha : float, optional
+        Tail probability for HPD region calculation (default 0.05).
+    covariables : bool, optional
+        If True, use models trained with covariates (Beryllium-10 and Earth's geomagnetic field 
+        paleo-intensity); otherwise use models without covariates.
+        Default is False.
+    mesure_likelihood : str, optional, default="gaussian_mixture"
+        Which measurement-likelihood model to use. Must be one of:
+        "gaussian_mixture", "curve_gaussian_approximation".
+        Default is "gaussian_mixture".
+    compute_calage_posterior_mean_and_std : bool, optional
+        If True, sample from the approximate posterior (via the piecewise approximation)
+        and compute posterior mean and standard deviation. Default is False.
+    sample_size : int, optional
+        Number of posterior samples to draw when `compute_calage_posterior_mean_and_std` is True.
+        Default is 1000.
+
+    Returns
+    -------
+    results : Dict[str, Any]
+        A dictionary containing many entries including (but not limited to):  
+        - "calage_posterior_mode" : int  
+            Posterior mode (most probable calibrated date, rounded to int).  
+        - "calage_posterior_mode_density" : float  
+            Posterior density (scaled) at the mode.  
+        - "connexe_HPD_intervals" : ndarray  
+            Array of connected HPD intervals in the *rescaled* domain.  
+        - "connexe_HPD_intervals_unscaled" : ndarray  
+            Same HPD intervals converted back to original date units.  
+        - "connexe_HPD_intervals_unscaled_round" : ndarray  
+            HPD intervals rounded to integers (useful as year ranges).  
+        - "HPD_region_length" : int  
+            Total length of HPD regions in original date units (rounded).  
+        - "middle_points" : ndarray  
+            Middle points (unscaled) used to compute the posterior density.  
+        - "middle_points_density" : ndarray  
+            Posterior density evaluated at `middle_points`.  
+        - "calage_posterior_mean" : Optional[int]  
+            Posterior mean (int) if sampling was requested, otherwise None.  
+        - "calage_posterior_std" : Optional[int]  
+            Posterior std (int) if sampling was requested, otherwise None.  
+        - "calage_sample" : Optional[ndarray]  
+            Posterior samples (in original date units) if sampling was requested, otherwise None.  
+        - "c14age", "c14sig", "covariables", "alpha" : input parameters echoed back.  
+
+    Notes
+    -----
+    **Mathematical formulation of measurement-likelihood model**
+
+    The posterior density of the calibrated date $d$ (associated to a measurement $m$ of std 
+    $\sigma$) is proportional to the product of the prior and the likelihood:
+        $$
+        p(d | m) \\propto p(d) \\times L(m | d),
+        $$
+    where the likelihood term \\( L(m | d) \\) is given by:
+        $$
+        L(m|d) = E_{BNN}[ \\exp(-(m - F^{14}C(d))^2 / (2σ^2)) ].
+        $$
+
+    Depending on the chosen `mesure_likelihood`, the likelihood term is estimated by:
+
+    1. **Gaussian Mixture Approximation**
+       $$
+       \\hat{L}(m|d) = \\frac{1}{N} \\sum_{i=1}^N 
+       \\frac{1}{\\sqrt{2\\pi}\\sigma} 
+       \\exp\\left[-\\frac{(m - \\hat{F}^{14}_iC(d))^2}{2\\sigma^2}\\right]
+       $$
+       where \\( \\hat{F}^{14}_iC(d) \\) are stochastic predictions from the BNN.
+
+    2. **Curve Gaussian Approximation (Central Limit Theorem)**
+       $$
+       \\hat{L}(m|d) = \\frac{1}{\\sqrt{2\\pi(\\sigma^2 + s_d^2)}} 
+       \\exp\\left[-\\frac{(m - \\mu_d)^2}{2(\\sigma^2 + s_d^2)}\\right]
+       $$
+       where \\( \\mu_d \\) and \\( s_d \\) are the mean and std of BNN predictions.
+
+    **Approximation and sampling strategy of the posterior distribution**
+
+    The function relies on precomputed midpoint predictions loaded by
+    `bnn_load_predictions_` and follows the piecewise approximation / sampling
+    strategy used elsewhere in this package (as described for example in 
+    `mono_cal_date_approx_density_sample`).
+
+    Examples
+    --------
+    >>> ### TODO ###
+    """
     
     # chargement des prédictions pré-sauvergardées
     
@@ -109,24 +228,28 @@ def individual_calibration(
         # )
         # nb_curves = None
         raise ValueError(
-            f"""
-            Le nombre de courbes utilisées dans pour la première partie est différent du nombre de courbes utilisées.
-            nb_curves_part_1 = {nb_curves_part_1} tandis que nb_curves_part_2 = {nb_curves_part_2}.
-            Il est nécessaire d'utiliser le même nombre de courbes pour avoir des estimateurs comparables lors de la
-            calibration de nouvelles mesures.
-            """
+            f"The number of predictive curves for the first and second parts differ: "
+            f"nb_curves_part_1 = {nb_curves_part_1}, nb_curves_part_2 = {nb_curves_part_2}. "
+            "You must use the same number of curves to obtain comparable estimators during calibration."
         )
     else :
         nb_curves = nb_curves_part_1
         
     if nb_intervals_part_1 != nb_intervals_part_2 :
+        # warnings.warn(
+        #     f"""
+        #     Les subdivisions de l'intervalle de temps ne contiennent pas le même nombre d'intervalles sur les deux 
+        #     parties de la courbe de calibration. En effet, nb_intervals_part_1 = {nb_intervals_part_1} et 
+        #     nb_intervals_part_2 = {nb_intervals_part_2}. Il faut en tenir compte dans les algorithmes de calibration
+        #     si ce n'est pas le cas.
+        #     """,
+        #     UserWarning,
+        #     stacklevel=1
+        # )
         warnings.warn(
-            f"""
-            Les subdivisions de l'intervalle de temps ne contiennent pas le même nombre d'intervalles sur les deux 
-            parties de la courbe de calibration. En effet, nb_intervals_part_1 = {nb_intervals_part_1} et 
-            nb_intervals_part_2 = {nb_intervals_part_2}. Il faut en tenir compte dans les algorithmes de calibration
-            si ce n'est pas le cas.
-            """,
+            f"The time subdivisions do not contain the same number of intervals for the two parts of the calibration curve. "
+            f"nb_intervals_part_1 = {nb_intervals_part_1} and nb_intervals_part_2 = {nb_intervals_part_2}. "
+            "Please account for this in calibration algorithms used if needed.",
             UserWarning,
             stacklevel=1
         )
@@ -309,7 +432,7 @@ def individual_calibration(
         HPD_regions_results['HPD_region_length'] += connexe_HPD_intervals_unscaled[i,1] - connexe_HPD_intervals_unscaled[i,0]
     HPD_regions_results['HPD_region_length'] = int(HPD_regions_results['HPD_region_length'])+1
     
-    results = HPD_regions_results
+    results: Dict[str, Any] = HPD_regions_results
     
     results['alpha'] = alpha
     
