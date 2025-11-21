@@ -46,7 +46,7 @@ from typing import Dict, Any, Tuple, Optional
 from typing import (
     # Literal,
     Optional,
-    # Union,
+    Union,
     # List,
     Tuple,
     # Callable,
@@ -571,7 +571,7 @@ def IntCal20_calibration(
     >>> out = IntCal20_calibration(2850, 30)
     >>> out['connexe_HPD_intervals_unscaled_round']
     array([[ 900, 1020]])
-    
+
     >>> # Computing posterior mean and standard deviation
     >>> out = IntCal20_calibration(2850, 30, compute_calage_posterior_mean_and_std=True)
     >>> out['calage_posterior_mean']
@@ -727,12 +727,82 @@ def IntCal20_calibration(
 
 # fonction concanténant les valeurs issues de deux parties de la courbe
 def concatenate_curves_parts(
-    covariables=False
-):
+    covariables: bool = False
+) -> Dict[str, Union[int, float, np.ndarray]]:
     """
-    concatenate the first and second parts of the calibration curve by putting together
-    midpoints predictions and generating quantities (Min and Max from training step) 
-    for scaling data as needed for differents algorithms and models.
+    Concatenate the two parts of the radiocarbon calibration curve
+    (recent part and ancient part) by loading pre-computed midpoint predictions,
+    rescaling the domains, and merging both sets into a single calibration structure.
+
+    The function performs the following steps:
+
+    1. Load midpoint predictions for the two curve parts from previously saved files.  
+    2. Verify that both parts were generated using the same number of curves.
+    3. Optionally warn the user if the two parts do not share the same number of
+       temporal subdivisions.
+    4. Recover original time scales using inverse min-max scaling and convert midpoint
+       predictions from Δ14C (d14c) to F14C values.
+    5. Rescale both curve parts into a unified [0, 1] domain so that 
+        0 corresponds to the minimum of the recent part (part 1) and
+        1 corresponds to the maximum of the ancient part (part 2).
+    6. Return all processed quantities as a structured dictionary that is
+       directly usable for individual calibration, density evaluation, and
+       HPD interval computation.
+
+    Parameters
+    ----------
+    covariables : bool, optional
+        Whether covariables were used when producing the Bayesian Neural Network
+        midpoint predictions. Defaults to False.
+
+    Returns
+    -------
+    Dict[str, Union[int, float, numpy.ndarray]]:
+        A dictionary containing calibration domain information and concatenated
+        prediction data, with the following keys:
+
+        **Curve part 1 (recent period)** 
+
+        - ``'Max_part_1'`` (float): Maximum value of the calendar dates in training data for part 1.  
+        - ``'Min_part_1'`` (float): Minimum value of the calendar dates in training data for part 1.  
+        - ``'max_horizon_x_part_1'`` (float): Upper limit of the calibration domain (unscaled) for part 1.  
+        - ``'max_horizon_x_part_1_scaled'`` (float): Corresponding upper bound after min–max scaling.  
+        - ``'min_horizon_x_part_1'`` (float): Lower limit of the calibration domain (unscaled) for part 1.  
+        - ``'min_horizon_x_part_1_scaled'`` (float): Corresponding lower bound after min–max scaling.  
+
+        **Curve part 2 (ancient period)**  
+
+        - ``'Max_part_2'`` (float): Maximum value of the calendar dates in training data for part 2.
+        - ``'Min_part_2'`` (float): Minimum value of the calendar dates in training data for part 2.
+        - ``'max_horizon_x_part_2'`` (float): Upper limit of the calibration domain (unscaled) for part 2.
+        - ``'max_horizon_x_part_2_scaled'`` (float): Corresponding upper bound after min–max scaling.
+        - ``'min_horizon_x_part_2'`` (float): Lower limit of the calibration domain (unscaled) for part 2.
+        - ``'min_horizon_x_part_2_scaled'`` (float): Corresponding lower bound after min–max scaling.
+
+        **Concatenated and processed quantities**  
+
+        - ``'nb_curves'`` (int): Number of neural network models simultaneously used to produce predictions.
+        - ``'intervals_bounds_rescaled'`` (numpy.ndarray): Rescaled boundaries of all time subdivisions after merging.
+        - ``'middle_points_rescaled'`` (numpy.ndarray): Midpoints of all subdivisions after conversion into [0, 1].
+        - ``'middle_points_predictions_in_F14C'`` (numpy.ndarray):
+          Matrix ``(nb_intervals_total × nb_curves)`` containing midpoint predictions
+          expressed as F14C values after reconstruction of the original time scale.
+
+    Raises
+    ------
+    ValueError
+        If the two curve parts were generated using different numbers of curves.
+
+    Warns
+    -----
+    UserWarning
+        If the two curve parts do not share the same number of time subdivisions.
+
+    Notes
+    -----
+    The merging and rescaling ensure that sampling and density computations in
+    individual calibration operate in a consistent 1D standardized domain while
+    preserving the physical meaning of the original temporal scales.
     """
     
     # chargement des prédictions pré-sauvergardées
@@ -1355,6 +1425,8 @@ def joint_calibration(
 __all__ = [
     # fonctions de calibration
     "individual_calibration", 
-    "IntCal20_calibration", 
+    "IntCal20_calibration",
+    "concatenate_curves_parts",
+    "multi_cal_date_approx_density_MCMC_sampler_for_concatenated_curve", 
     "joint_calibration"
 ]
