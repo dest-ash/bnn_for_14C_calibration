@@ -826,24 +826,43 @@ def concatenate_curves_parts(
     )
     
     if nb_curves_part_1 != nb_curves_part_2 :
+        # raise ValueError(
+        #     f"""
+        #     Le nombre de courbes utilisées dans pour la première partie est différent du nombre de courbes utilisées.
+        #     nb_curves_part_1 = {nb_curves_part_1} tandis que nb_curves_part_2 = {nb_curves_part_2}.
+        #     Il est nécessaire d'utiliser le même nombre de courbes pour avoir des estimateurs comparables lors de la
+        #     calibration de nouvelles mesures.
+        #     """
+        # )
         raise ValueError(
             f"""
-            Le nombre de courbes utilisées dans pour la première partie est différent du nombre de courbes utilisées.
-            nb_curves_part_1 = {nb_curves_part_1} tandis que nb_curves_part_2 = {nb_curves_part_2}.
-            Il est nécessaire d'utiliser le même nombre de courbes pour avoir des estimateurs comparables lors de la
-            calibration de nouvelles mesures.
+            The number of curves in the first part differs from the number of curves in the second part.
+            nb_curves_part_1 = {nb_curves_part_1} while nb_curves_part_2 = {nb_curves_part_2}.
+            Both parts must use the same number of curves to ensure comparable estimators
+            when calibrating new measurements.
             """
         )
+
     else :
         nb_curves = nb_curves_part_1
         
     if nb_intervals_part_1 != nb_intervals_part_2 :
+        # warnings.warn(
+        #     f"""
+        #     Les subdivisions de l'intervalle de temps ne contiennent pas le même nombre d'intervalles sur les deux 
+        #     parties de la courbe de calibration. En effet, nb_intervals_part_1 = {nb_intervals_part_1} et 
+        #     nb_intervals_part_2 = {nb_intervals_part_2}. Il faut en tenir compte dans les algorithmes de calibration
+        #     si ce n'est pas le cas.
+        #     """,
+        #     UserWarning,
+        #     stacklevel=1
+        # )
         warnings.warn(
             f"""
-            Les subdivisions de l'intervalle de temps ne contiennent pas le même nombre d'intervalles sur les deux 
-            parties de la courbe de calibration. En effet, nb_intervals_part_1 = {nb_intervals_part_1} et 
-            nb_intervals_part_2 = {nb_intervals_part_2}. Il faut en tenir compte dans les algorithmes de calibration
-            si ce n'est pas le cas.
+            The subdivisions of the time range do not contain the same number of intervals
+            in both curve parts. nb_intervals_part_1 = {nb_intervals_part_1} and 
+            nb_intervals_part_2 = {nb_intervals_part_2}. Calibration algorithms must
+            take this into account if necessary.
             """,
             UserWarning,
             stacklevel=1
