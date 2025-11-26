@@ -1659,11 +1659,21 @@ def joint_calibration(
     return results
 
 
-
+# fonctions publiques du module
 __all__ = [
     # fonctions de calibration
     "individual_calibration", 
     "IntCal20_calibration",
+    "joint_calibration"
+]
+
+# toutes les fonctions du module
+all_functions = [
+    # calibration individuelle
+    "individual_calibration", 
+    "IntCal20_calibration",
+
+    # calibration jointe
     "concatenate_curves_parts",
     "multi_cal_date_approx_density_MCMC_sampler_for_concatenated_curve", 
     "joint_calibration"
