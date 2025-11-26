@@ -1498,15 +1498,116 @@ def multi_cal_date_approx_density_MCMC_sampler_for_concatenated_curve(
 
 
 def joint_calibration(
-    c14ages, c14sigs,
-    alpha = 0.05, # 1-0.68, #0.05,
-    #ordered=False,
-    covariables=False,
-    #batch_size=None,
-    compute_calage_posterior_mean_and_std = True,
-    compute_calage_posterior_mode = False,
-    chaine_length = 1000 # à utiliser pour la taille de la chaine MCMC
-) :
+    c14ages: np.ndarray,
+    c14sigs: np.ndarray,
+    alpha: float = 0.05,   # 1 - 0.68, # 0.05
+    covariables: bool = False,
+    compute_calage_posterior_mean_and_std: bool = True,
+    compute_calage_posterior_mode: bool = False,
+    chaine_length: int = 1000
+) -> Dict[str, Union[np.ndarray, float, int, None]]:
+    """
+    Perform **joint Bayesian calibration of multiple radiocarbon dates**
+    using the Metropolis–Hastings within Gibbs sampler defined in 
+    `multi_cal_date_approx_density_MCMC_sampler_for_concatenated_curve`.
+
+    This function acts as a *wrapper* around the MCMC sampler:
+    it converts measurements from conventional radiocarbon ages ($^{14}$C) 
+    to the corresponding F$^{14}$C values, runs the joint sampler, and 
+    computes posterior summaries (posterior mean, standard deviation, 
+    posterior mode).
+
+    Parameters
+    ----------
+    c14ages : np.ndarray
+        Measured radiocarbon ages (conventional radiocarbon ages) in 
+        years BP (Before Present).  
+        Shape: ``(n_dates,)``.
+
+    c14sigs : np.ndarray
+        Laboratory measurement standard deviations associated to each
+        conventional radiocarbon age.  
+        Shape: ``(n_dates,)``.
+
+    alpha : float, optional
+        Tail probability for HPD regions (default: 0.05).  
+        *Note:* This argument is kept for compatibility, although
+        joint calibration does not compute connexe HPD regions directly
+        (these can be obtained via marginal calibration functions).  
+        Marginal credible intervals can be computed using the coordinates 
+        of the MCMC chain sampled from the joint density.
+
+    covariables : bool, optional
+        Whether to use geophysical covariates (10Be, paleointensity)
+        as additional inputs to the calibration BNNs.
+
+    compute_calage_posterior_mean_and_std : bool, optional
+        If True, compute the posterior mean and posterior standard deviation
+        of calibrated dates (calendar scale), based on the MCMC chain.
+
+    compute_calage_posterior_mode : bool, optional
+        If True, compute the posterior mode as the MCMC sample with highest
+        joint log-density.
+
+    chaine_length : int, optional
+        Length of the MCMC chain (default: 1000).
+
+    Returns
+    -------
+    Dict[str, Union[np.ndarray, float, int, None]]
+        A dictionary with the following keys:
+
+        - ``'chaine'`` : np.ndarray  
+          MCMC chain of calibrated dates (calendar scale).  
+          Shape: ``(n_dates, chaine_length)``.
+
+        - ``'chaine_log_joint_density_unscaled'`` : np.ndarray  
+          Log of the joint target density evaluated along the MCMC chain.
+          Shape: ``(chaine_length,)``.
+
+        - ``'acceptance_rate'`` : float   
+          Proportion of iterations where at least one coordinate changes  
+          (=`modified_global_acceptance_rate` returned by 
+          `multi_cal_date_approx_density_MCMC_sampler_for_concatenated_curve`).
+
+        - ``'marginal_acceptance_rates'`` : np.ndarray  
+          Marginal acceptance rate for each date. Shape: ``(n_dates,)``.
+
+        - ``'mode_index'`` : int or None  
+          Index of the chain with maximum joint posterior density.
+
+        - ``'calage_posterior_mode'`` : np.ndarray or None  
+          Posterior mode for each calibrated date according to the joint density 
+          (vector of length ``n_dates``) if requested.
+
+        - ``'calage_posterior_mean'`` : np.ndarray or None  
+          Posterior mean of calibrated dates (length ``n_dates``) if requested.
+
+        - ``'calage_posterior_std'`` : np.ndarray or None  
+          Posterior standard deviation for each calibrated date  
+          (length ``n_dates``) if requested.
+
+    Notes
+    -----
+    **1. Conventional radiocarbon ages conversion**  
+    Inputs are transformed from the ¹⁴C domain into the F¹⁴C domain prior to
+    calibration using the deterministic conversions:
+    $$
+        F^{14}C = e^{-\\frac{\\mathrm{C14Age}}{8033}}
+    $$
+    and associated propagation for uncertainties is carried out using the 
+    delta method.
+
+    **2. MCMC sampler**  
+    The sampler used internally performs joint calibration by evaluating the
+    target density constructed from the concatenated curve (two pre-trained 
+    BNNs to estimate the two parts of the calibration curve).
+
+    **3. Posterior summaries**  
+    The posterior summaries are calculated on the calendar scale,
+    using direct moment estimators from the MCMC chain.
+
+    """
     
     # passage du domaine C14 au domaine F14C
     c14ages = c14_to_f14c(c14=c14ages)
@@ -1528,13 +1629,13 @@ def joint_calibration(
     acceptance_rate = MCMC_results['modified_global_acceptance_rate']
     marginal_acceptance_rates = MCMC_results['marginal_acceptance_rates']
     
-    results = {
+    results: Dict[str, Union[np.ndarray, float, int, None]] = {
         # si oui (cf. argument ordered), relation croissante supposée sur les dates calibrées
         #'ordre_sur_dates' : ordered,
-        'chaine' : chaine, 
-        'chaine_log_joint_density_unscaled' : chaine_log_density,
-        'acceptance_rate' : acceptance_rate,
-        'marginal_acceptance_rates' : marginal_acceptance_rates
+        'chaine': chaine,
+        'chaine_log_joint_density_unscaled': chaine_log_density,
+        'acceptance_rate': acceptance_rate,
+        'marginal_acceptance_rates': marginal_acceptance_rates
     }
     
     
