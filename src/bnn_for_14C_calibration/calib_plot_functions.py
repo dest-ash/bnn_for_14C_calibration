@@ -454,7 +454,7 @@ def add_individual_calibration_curve_part_1(
     domaine : {'delta14c', 'c14', 'f14c'}, optional
         Domain for the plotted predictions. Default is `'delta14c'`.
     covariables : bool, optional
-        If True, load the predictions file that includes covariates.
+        Whether to use BNN predictions trained with covariates.
     label_prefix : str, optional
         String prefix to prepend to plotted labels.
     label_suffix : str, optional
@@ -604,27 +604,82 @@ def add_individual_calibration_curve_part_1(
 
 
 def plot_individual_calibration_curve_part_1(
-    xlabel = "âges calibrés en années BP",
-    ylabel = "âges C14 en années BP",
-    add_grid = True,
-    fontsize_legend = 'small',
-    ax = None,
-    figsize = None,
-    color = 'cyan',
-    alpha=.4,
-    incertitude = True,
-    sigma_length = 1,
-    Min_x = None, Max_x = None,
-    Min_y = None, Max_y = None,
-    invert_xaxis = True,
-    domaine = ['delta14c', 'c14'][0],
-    middle_points_predictions_part_2_filepath = "last_version",
-    covariables = False,
-    credible_interval = False,
-    credible_interval_level = 0.95,
-    credible_color = None,
-    credible_alpha = None
-):
+    xlabel: str = "Calibrated dates (in years BP)",
+    ylabel: str = "Radiocarbon ages (in years BP)",
+    add_grid: bool = True,
+    fontsize_legend: str = 'small',
+    ax: Optional[plt.Axes] = None,
+    figsize: Optional[Tuple[int, int]] = None,
+    color: str = 'cyan',
+    alpha: float = .4,
+    incertitude: bool = True,
+    sigma_length: int = 1,
+    Min_x: Optional[float] = None, Max_x: Optional[float] = None,
+    Min_y: Optional[float] = None, Max_y: Optional[float] = None,
+    invert_xaxis: bool = True,
+    domaine: str = ['delta14c', 'c14', 'f14c'][0],
+    covariables: bool = False,
+    credible_interval: bool = False,
+    credible_interval_level: float = 0.95,
+    credible_color: Optional[str] = None,
+    credible_alpha: Optional[float] = None
+) -> None:
+    """
+    Plot the BNN calibration curve (part 1) by calling
+    ``add_individual_calibration_curve_part_1`` and applying axis labels,
+    grid, legend, and final display.
+
+    This function is a thin wrapper around
+    ``add_individual_calibration_curve_part_1`` and only handles visual
+    elements such as xlabel, ylabel, grid and legend.
+
+    Parameters
+    ----------
+    xlabel : str, optional
+        Label for the x-axis.
+    ylabel : str, optional
+        Label for the y-axis. Adjusted automatically if `domaine` is `"delta14c"` or `"f14c"`.
+    add_grid : bool, optional
+        Whether to display a grid on the plot.
+    fontsize_legend : str, optional
+        Font size for the legend.
+    ax : matplotlib.axes.Axes or None, optional
+        Axis to draw on. If ``None``, the axis internally created by
+        ``add_individual_calibration_curve_part_1`` is used.
+    figsize : tuple(int, int) or None, optional
+        Figure size forwarded to the plotting function.
+    color : str, optional
+        Color used for plotting the BNN mean curve.
+    alpha : float, optional
+        Transparency for uncertainty or credible interval fills.
+    incertitude : bool, optional
+        Whether to draw the ±σ uncertainty band around the mean curve.
+    sigma_length : int, optional
+        Number of standard deviations for the uncertainty band.
+    Min_x, Max_x : float or None, optional
+        Optional x-axis bounds.
+    Min_y, Max_y : float or None, optional
+        Optional y-axis bounds.
+    invert_xaxis : bool, optional
+        If True, the x-axis is inverted (IntCal convention).
+    domaine : {'delta14c', 'c14', 'f14c'}, optional
+        Domain of radiocarbon quantities displayed.
+    covariables : bool, optional
+        Whether to use BNN predictions trained with covariates.
+    credible_interval : bool, optional
+        If True, compute and plot pointwise credible intervals from predictive samples.
+    credible_interval_level : float, optional
+        Credible interval level (e.g. 0.95 for 95% credible interval). Default 0.95.
+    credible_color : str or None, optional
+        Color for the credible interval fill. If ``None`` the main ``color`` is used.
+    credible_alpha : float or None, optional
+        Alpha transparency for the credible interval fill. If ``None`` ``alpha`` is used.
+
+    Returns
+    -------
+    None
+        The function produces a plot.
+    """
     ax = add_individual_calibration_curve_part_1(
             ax = ax,
             figsize = figsize,
@@ -636,7 +691,6 @@ def plot_individual_calibration_curve_part_1(
             Min_y = Min_y, Max_y = Max_y,
             invert_xaxis = True,
             domaine = domaine,
-            middle_points_predictions_part_2_filepath = middle_points_predictions_part_2_filepath,
             covariables = covariables,
             credible_interval = credible_interval,
             credible_interval_level = credible_interval_level,
