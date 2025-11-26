@@ -1463,15 +1463,52 @@ def plot_bnn_calibration_curve(
 
 # représentation graphique densité date calibrée et région HPD
 def add_cal_date_density_plot_and_HPD_region(
-    calibration_results,
-    ax = None,
-    color = "cyan", #"blue", #"green"
-    eps = 10**(-7), # en dessous de ce seuil, la densité est considérée nulle dans le graphique
-    set_title = True,
-    add_legend = True,
-    plot_HPD_bounds = False,
-    plot_HPD_threshold = False
-) :
+    calibration_results: Dict[str, Any],
+    ax: Optional[plt.Axes] = None,
+    color: str = "cyan",
+    eps: float = 10**(-7),
+    set_title: bool = True,
+    add_legend: bool = True,
+    plot_HPD_bounds: bool = False,
+    plot_HPD_threshold: bool = False
+) -> plt.Axes:
+    """
+    Plot the posterior density of a calibrated date together with its HPD (Highest 
+    Posterior Density) region. This function visualizes the posterior distribution 
+    computed from calibration results and highlights all HPD intervals by shading 
+    and optional bound/threshold markers.
+
+    Parameters
+    ----------
+    calibration_results : Dict[str, Any]
+        Dictionary containing all outputs of the calibration process, including:
+
+        - `'middle_points'` : 1D array of time grid points.
+        - `'middle_points_density'` : posterior density evaluated at each grid point.
+        - `'alpha'` : tail probability used for HPD region computation (e.g. 0.05 for 95% HPD).
+        - `'HPD_threshold'` : density threshold defining the HPD region.
+        - `'connexe_HPD_intervals_unscaled_round'` : list of HPD intervals (tuples).
+    ax : matplotlib.axes.Axes or None, optional
+        Axis on which to draw. If None, the current axis (`plt.gca()`) is used.
+    color : str, optional
+        Color used for curves and shaded HPD region.
+    eps : float, optional
+        Minimal normalized density threshold; values below this are considered zero 
+        for plotting purposes.
+    set_title : bool, optional
+        Whether the figure title should be added.
+    add_legend : bool, optional
+        Whether to display the legend.
+    plot_HPD_bounds : bool, optional
+        Whether to plot vertical dashed lines at HPD interval bounds.
+    plot_HPD_threshold : bool, optional
+        Whether to plot the threshold line used to compute the HPD region.
+
+    Returns
+    -------
+    matplotlib.axes.Axes
+        The axis where the plot was added.
+    """
     #if type(ax) == 'NoneType' :
     if ax == None :
         ax = plt.gca()
