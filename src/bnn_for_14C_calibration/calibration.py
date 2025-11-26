@@ -128,29 +128,30 @@ def individual_calibration(
     -------
     results : Dict[str, Any]
         A dictionary containing many entries including (but not limited to):  
-        - "calage_posterior_mode" : int  
+
+        - `"calage_posterior_mode"` : int  
             Posterior mode (most probable calibrated date, rounded to int).  
-        - "calage_posterior_mode_density" : float  
+        - `"calage_posterior_mode_density"` : float  
             Posterior density (scaled) at the mode.  
-        - "connexe_HPD_intervals" : ndarray  
+        - `"connexe_HPD_intervals"` : ndarray  
             Array of connected HPD intervals in the *rescaled* domain.  
-        - "connexe_HPD_intervals_unscaled" : ndarray  
+        - `"connexe_HPD_intervals_unscaled"` : ndarray  
             Same HPD intervals converted back to original date units.  
-        - "connexe_HPD_intervals_unscaled_round" : ndarray  
+        - `"connexe_HPD_intervals_unscaled_round"` : ndarray  
             HPD intervals rounded to integers (useful as year ranges).  
-        - "HPD_region_length" : int  
+        - `"HPD_region_length"` : int  
             Total length of HPD regions in original date units (rounded).  
-        - "middle_points" : ndarray  
+        - `"middle_points"` : ndarray  
             Middle points (unscaled) used to compute the posterior density.  
-        - "middle_points_density" : ndarray  
+        - `"middle_points_density"` : ndarray  
             Posterior density evaluated at `middle_points`.  
-        - "calage_posterior_mean" : Optional[int]  
+        - `"calage_posterior_mean"` : Optional[int]  
             Posterior mean (int) if sampling was requested, otherwise None.  
-        - "calage_posterior_std" : Optional[int]  
+        - `"calage_posterior_std"` : Optional[int]  
             Posterior std (int) if sampling was requested, otherwise None.  
-        - "calage_sample" : Optional[ndarray]  
+        - `"calage_sample"` : Optional[ndarray]  
             Posterior samples (in original date units) if sampling was requested, otherwise None.  
-        - "c14age", "c14sig", "covariables", "alpha" : input parameters echoed back.  
+        - `"c14age"`, `"c14sig"`, `"covariables"`, `"alpha"` : input parameters echoed back.  
 
     Notes
     -----
@@ -504,19 +505,19 @@ def IntCal20_calibration(
     results : Dict[str, Any]
         A dictionary containing:
         
-        - `connexe_HPD_intervals` : array of HPD intervals in scaled space  
-        - `connexe_HPD_intervals_unscaled` : HPD intervals transformed back into calendar years  
-        - `connexe_HPD_intervals_unscaled_round` : integer-rounded calendar HPD intervals  
-        - `calage_posterior_mode` : posterior mode of the calibrated date (calendar scale)  
-        - `HPD_region_length` : total length (in years) of the HPD region  
-        - `middle_points` : calendar ages at which posterior density was evaluated  
-        - `middle_points_density` : posterior density evaluated at these points  
-        - `calage_posterior_mean` : posterior mean (if computed)  
-        - `calage_posterior_std` : posterior standard deviation (if computed)  
-        - `calage_sample` : posterior sample values (if sampling was performed)  
-        - `alpha` : significance level used  
-        - `c14age`, `c14sig` : the original radiocarbon measurement  
-        - `covariables` : always None for IntCal20 curve
+        - `'connexe_HPD_intervals'` : array of HPD intervals in scaled space  
+        - `'connexe_HPD_intervals_unscaled'` : HPD intervals transformed back into calendar years  
+        - `'connexe_HPD_intervals_unscaled_round'` : integer-rounded calendar HPD intervals  
+        - `'calage_posterior_mode'` : posterior mode of the calibrated date (calendar scale)  
+        - `'HPD_region_length'` : total length (in years) of the HPD region  
+        - `'middle_points'` : calendar ages at which posterior density was evaluated  
+        - `'middle_points_density'` : posterior density evaluated at these points  
+        - `'calage_posterior_mean'` : posterior mean (if computed)  
+        - `'calage_posterior_std'` : posterior standard deviation (if computed)  
+        - `'calage_sample'` : posterior sample values (if sampling was performed)  
+        - `'alpha'` : significance level used  
+        - `'c14age'`, `'c14sig'` : the original radiocarbon measurement  
+        - `'covariables'` : always None for IntCal20 curve
 
     Notes
     -----
@@ -1029,20 +1030,137 @@ def concatenate_curves_parts(
 
 # MCMC pour calibration jointe
 def multi_cal_date_approx_density_MCMC_sampler_for_concatenated_curve(
-    mesures, 
-    lab_errors,
+    mesures: np.ndarray, 
+    lab_errors: np.ndarray,
     
-    covariables = False,
-    prior_density="default",
-    marginal_prior_density="default",
-    #ordered = False,
-    #adapt_proposals = True,
-    chaine_length = 100,
-    # batch_size pour les prédictions des proposals en mode minibatch : 
-    # par défaut None, ce qui utilise chaine_length (soit dim_chaine steps)
-    batch_size = None
-) :
-    
+    covariables: bool = False,
+    prior_density: str = "default",
+    marginal_prior_density: str = "default",
+    chaine_length: int = 100,
+    batch_size: int = None
+) -> Dict[str, Union[float, np.ndarray]]:
+    """
+    Perform joint Bayesian radiocarbon calibration using a Metropolis–Hastings
+    within Gibbs sampler, where the likelihood is evaluated using the approximate
+    posterior density obtained using the radiocarbon calibration curve assembled 
+    from the two Bayesian Neural Network models that estimate the two parts of 
+    the curve.
+
+    Parameters
+    ----------
+    mesures : np.ndarray
+        Observed radiocarbon measurements in the F¹⁴C domain. Shape `(n_dates,)`.
+    lab_errors : np.ndarray
+        Standard deviations of laboratory measurement errors for each date. 
+        Must have shape `(n_dates,)`.
+    covariables : bool, optional
+        If True, covariates (10Be and paleointensity) are used as model inputs.
+    prior_density : str, optional
+        Name of the prior used in the joint density evaluation.
+    marginal_prior_density : str, optional
+        Prior used in the univariate calibration step for generating proposals.
+    chaine_length : int, optional
+        Length of the MCMC chain (default: 100).
+    batch_size : int or None, optional
+        Batch size for predictions. If None, defaults to `chaine_length`.
+
+    Returns
+    -------
+    Dict[str, Union[float, np.ndarray]]:
+        A dictionary with the following entries:
+
+        - ``'chaine'`` (np.ndarray):
+          Final MCMC chain of shape ``(dim_chaine, chaine_length)`` containing
+          calibrated calendar dates on the unscaled domain.
+
+        - ``'chaine_log_density'`` (np.ndarray):
+          One-dimensional array of length ``chaine_length`` storing the log
+          joint target density at each MCMC iteration (up to an additive constant).
+
+        - ``'global_acceptance_rate'`` (float):
+          Acceptance rate of proposals where *all* coordinates changed simultaneously.
+
+        - ``'modified_global_acceptance_rate'`` (float):
+          Proportion of iterations where *at least one* coordinate changed,
+          providing a softer global acceptance indicator.
+
+        - ``'marginal_acceptance_rates'`` (np.ndarray):
+          Vector of size ``dim_chaine`` where the ``j``-th entry is the acceptance
+          rate of single-coordinate updates for parameter ``j``.
+
+    Notes
+    -----
+    The proposal distribution for each calibrated date is constructed from a
+    piecewise-constant approximation of the marginal posterior density. Because
+    sampling first selects an interval with probability proportional to its
+    area and then samples uniformly within that interval, the resulting
+    cumulative distribution function is necessarily **continuous** on each
+    interval and globally continuous.
+
+    The MCMC sampler therefore performs:   
+
+     - independent marginal proposal generation,  
+     
+     - joint acceptance testing consistent with the multi-sample calibration
+        target density using BNN-derived likelihoods.  
+
+    The sampler is therefore a Metropolis–Hastings within Gibbs algorithm
+    operating in a space of dimension equal to the number of calibrated dates.
+
+    The algorithm proceeds as follows:
+
+    1. **Load trained BNNs for both curve segments**  
+       The calibration curve is split into:  
+        - Part 1: recent segment estimated using absolute calendar dates  
+        - Part 2: ancient segment estimated using uncertain calendar dates  
+
+    2. **Load midpoint predictions and interval decomposition**  
+       Via the `concatenate_curves_parts` function, we retrieve:  
+        - interval bounds,
+        - midpoint predictions expressed in F14C,
+        - min/max for inverse domain scaling.
+
+    3. **Generate proposals for each calibrated sample**  
+        For each calibrated date \( d_j \) of F$^{14}$C radiocarbon measurement \( m_j \) 
+        whose laboratory error standard deviastion is \( s_i \):  
+        - Compute univariate approximate posterior density over a subdivision of 
+            the calibration interval.  
+        - Sample ``chaine_length`` independent proposals from the corresponding
+            approximate density (piecewise-constant over the subintervals of 
+            the subdivision).  
+        - Store proposals and their unnormalized log-density.  
+
+        This corresponds mathematically to sampling:
+        $$
+        d_j^{(i)} \sim p(d_j \mid m_j, s_j)
+        $$
+        independently across ``i`` but before computing their consistency under
+        the joint model with all other dates.
+
+    4. **Precompute predictions for all proposals**  
+        For each sampled \( d_j \):  
+        - Rescale to the relevant calibration domain,  
+        - Pass to the appropriate fitted BNN (part 1 or 2),  
+        - Convert predicted $\Delta^{14}$C into F$^{14}$C,  
+        - Store matrix of predictions for later log-density evaluation. 
+
+    5. **Metropolis–Hastings within Gibbs**  
+       For iteration ``n``, each dimension ``j`` of the parameter vector
+       (one calibrated date per dimension) is updated conditionally:
+       $$
+            d_j^{(n)} \longrightarrow d_j^{(n+1)}
+       $$
+       based on acceptance probability computed from the joint density:
+       $$
+            p(d_1,\dots,d_{\\text{n_dates}} \mid m_1,\dots,m_{\\text{n_dates}}, s_1, \dots, s_{\\text{s_dates}})
+       $$
+       using pre-evaluated proposal densities and neural predictions.
+
+    6. **Return the calibrated MCMC chain**  
+       The chain is finally mapped back to unscaled calendar ages using the
+       inverse min–max transformation.
+    """
+
     # chargement des modèles entrainés
     bnn_model_part_1 = bnn_load_model_part_1(
         path_to_model_weigths='last_version',
@@ -1136,8 +1254,8 @@ def multi_cal_date_approx_density_MCMC_sampler_for_concatenated_curve(
         if type(middle_points_predictions) != np.ndarray :
             raise ValueError(
                 """
-                'middle_points_predictions' doit être de type 'numpy.ndarray'
-                quand il est fourni et de taille ('nb_intervals', 'nb_curves')
+                'middle_points_predictions' must be a 'numpy.ndarray'
+                when provided, and must have shape ('nb_intervals', 'nb_curves')
                 """
             )
         marginal_density_dim_j = _mono_cal_date_approx_density_on_middle_points_(
