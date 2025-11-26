@@ -657,9 +657,9 @@ def plot_individual_calibration_curve_part_1(
     sigma_length : int, optional
         Number of standard deviations for the uncertainty band.
     Min_x, Max_x : float or None, optional
-        Optional x-axis bounds.
+        Optional x-axis limits; when both provided the axis limits are set.
     Min_y, Max_y : float or None, optional
-        Optional y-axis bounds.
+        Optional y-axis limits; when both provided the axis limits are set.
     invert_xaxis : bool, optional
         If True, the x-axis is inverted (IntCal convention).
     domaine : {'delta14c', 'c14', 'f14c'}, optional
