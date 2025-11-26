@@ -1345,29 +1345,85 @@ def add_bnn_calibration_curve(
 
 
 def plot_bnn_calibration_curve(
-    xlabel = "calendar dates in years BP",
-    ylabel = "$^{14}$C ages in years BP",
-    add_grid = True,
-    fontsize_legend = 'small',
-    reset_margins = False,
+    xlabel: str = "Calendar dates (in years BP)",
+    ylabel: str = "Radiocarbon ages (in years BP)",
+    add_grid: bool = True,
+    fontsize_legend: str = 'small',
+    reset_margins: bool = False,
 
-    ax = None,
-    figsize = None,
-    color = 'cyan',
-    alpha=.4,
-    incertitude = True,
-    sigma_length = 1,
-    Min_x = None, Max_x = None,
-    Min_y = None, Max_y = None,
-    invert_xaxis = True,
-    domaine = ['delta14c', 'c14', 'f14c'][0],
-    middle_points_predictions_filepath = "last_version",
-    covariables = False,
-    credible_interval = False,
-    credible_interval_level = 0.95,
-    credible_color = None,
-    credible_alpha = None
-):
+    ax: Optional[plt.Axes] = None,
+    figsize: Optional[Tuple[int, int]] = None,
+    color: str = 'cyan',
+    alpha: float = .4,
+    incertitude: bool = True,
+    sigma_length: float = 1,
+    Min_x: Optional[float] = None, Max_x: Optional[float] = None,
+    Min_y: Optional[float] = None, Max_y: Optional[float] = None,
+    invert_xaxis: bool = True,
+    domaine: str = ['delta14c', 'c14', 'f14c'][0],
+    covariables: bool = False,
+    credible_interval: bool = False,
+    credible_interval_level: float = 0.95,
+    credible_color: Optional[str] = None,
+    credible_alpha: Optional[float] = None
+) -> None:
+    """
+    Plot the full BNN-based calibration curve, including optional uncertainty
+    visualization, credible intervals, grid, labels, and legend. This function
+    acts as a convenience wrapper around `add_bnn_calibration_curve`, and 
+    automatically configures axis labels, grid display, margins, and legend 
+    formatting.
+
+    Parameters
+    ----------
+    xlabel : str, optional
+        X-axis label.
+    ylabel : str, optional
+        Y-axis label. Adjusted automatically if `domaine` is "delta14c" or "f14c".
+    add_grid : bool, optional
+        If True, draw a grid behind the plot.
+    fontsize_legend : str, optional
+        Legend font size (e.g., "small", "medium", "large").
+    reset_margins : bool, optional
+        Whether to remove extra margins around the plotted data.
+    ax : matplotlib.axes.Axes or None, optional
+        Axis on which to draw the curves. If ``None``, the axis is taken from
+        `add_bnn_calibration_curve`.
+    figsize : tuple or None
+        Figure size passed to underlying plotting functions.
+    color : str, optional
+        Color used for plotting the curve and uncertainty bands.
+    alpha : float, optional
+        Transparency level for uncertainty shading and credible interval bands.
+    incertitude : bool, optional
+        Whether to add the ±σ uncertainty band around the mean curve.
+    sigma_length : float, optional
+        Width of the uncertainty band in standard deviations.
+    Min_x, Max_x : float or None, optional
+        Optional x-axis limits; when both provided the axis limits are set.
+    Min_y, Max_y : float or None, optional
+        Optional y-axis limits; when both provided the axis limits are set.
+    invert_xaxis : bool, optional
+        Whether to invert the x-axis (used for IntCal-style plots).
+    domaine : {'delta14c', 'c14', 'f14c'}, optional
+        Domain of radiocarbon quantities displayed.
+    covariables : bool, optional
+        Whether to use BNN predictions trained with covariates; 
+        influences legend content.
+    credible_interval : bool, optional
+        Whether to compute and display credible intervals for the BNN predictions.
+    credible_interval_level : float, optional
+        Credible interval level (e.g., 0.95 for 95% CI).
+    credible_color : str or None, optional
+        Color of the credible interval shading (defaults to ``color``).
+    credible_alpha : float or None, optional
+        Transparency of the credible interval shading (defaults to ``alpha``).
+
+    Returns
+    -------
+    None
+        The function produces a plot.
+    """
     ax = add_bnn_calibration_curve(
             ax = ax,
             figsize = figsize,
@@ -1379,7 +1435,6 @@ def plot_bnn_calibration_curve(
             Min_y = Min_y, Max_y = Max_y,
             invert_xaxis = True,
             domaine = domaine,
-            middle_points_predictions_filepath = middle_points_predictions_filepath,
             covariables = covariables,
             credible_interval = credible_interval,
             credible_interval_level = credible_interval_level,
