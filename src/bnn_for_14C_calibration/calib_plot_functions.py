@@ -175,23 +175,66 @@ def add_IntCal20_curve(
     
     
 def plot_IntCal20_curve(
-    xlabel = "âges calibrés en années BP",
-    ylabel = "âges C14 en années BP",
-    add_grid = True,
-    fontsize_legend = 'small',
-    reset_margins = False,
+    xlabel: str = "Calibrated dates (years BP)",
+    ylabel: str = "Radiocarbon ages (years BP)",
+    add_grid: bool = True,
+    fontsize_legend: Union[int, str] = 'small',
+    reset_margins: bool = False,
 
-    ax = None,
-    figsize = None,
-    color = "green",
-    alpha=.4,
-    incertitude = True,
-    sigma_length = 1,
-    Min_x = None, Max_x = None,
-    Min_y = None, Max_y = None,
-    invert_xaxis = True,
-    domaine = ['delta14c', 'c14', 'f14c'][0]
+    ax: plt.Axes = None,
+    figsize: Optional[Tuple[int, int]] = None,
+    color: str = "green",
+    alpha: float = 0.4,
+    incertitude: bool = True,
+    sigma_length: int = 1,
+    Min_x: Optional[float] = None, 
+    Max_x: Optional[float] = None,
+    Min_y: Optional[float] = None, 
+    Max_y: Optional[float] = None,
+    invert_xaxis: bool = True,
+    domaine: str = 'delta14c'
 ):
+    """
+    Plot the IntCal20 calibration curve in the chosen radiocarbon domain.
+
+    Parameters
+    ----------
+    xlabel : str, optional
+        X-axis label.
+    ylabel : str, optional
+        Y-axis label. Adjusted automatically if `domaine` is "delta14c" or "f14c".
+    add_grid : bool, optional
+        If True, draw a grid behind the plot.
+    fontsize_legend : int or str, optional
+        Font size passed to matplotlib’s legend.
+    reset_margins : bool, optional
+        If True, reset axis margins to zero.
+
+    ax : matplotlib.axes.Axes or None
+        Existing axis onto which the curve is drawn. If None, a new one is created.
+    figsize : tuple(int, int), optional
+        Figure size passed to matplotlib.
+    color : str, optional
+        Color of the IntCal20 curve.
+    alpha : float, optional
+        Transparency for the uncertainty band.
+    incertitude : bool, optional
+        If True, display the ±σ IntCal20 uncertainty envelope.
+    sigma_length : int, optional
+        Number of sigma widths for the uncertainty envelope.
+
+    Min_x, Max_x, Min_y, Max_y : float or None
+        Bounds for the X and Y axes.
+    invert_xaxis : bool, optional
+        If True, invert X axis (IntCal standard orientation).
+    domaine : {'delta14c', 'c14', 'f14c'}
+        Domain in which to express radiocarbon values.
+
+    Returns
+    -------
+    None
+    """
+
     ax = add_IntCal20_curve(
             ax = ax,
             figsize = figsize,
@@ -221,14 +264,111 @@ def plot_IntCal20_curve(
     
     
 # fonction pour trouver beta_opt pour chaque prediction
-def find_quantile_beta_opt(alpha, predictions, method='median_unbiased'):
+def find_quantile_beta_opt(
+    alpha: float,
+    predictions: np.ndarray,
+    method: str = 'median_unbiased'
+) -> float:
+    """
+    Compute the optimal quantile-shift parameter ``beta`` that minimizes
+    the length of an asymmetric prediction credible interval of 
+    level ``1 - alpha``.
+
+    The interval is defined as:
+    $$
+        [ Q_{\\beta} , Q_{1 - \\alpha + \\beta} ]
+    $$
+    where $Q_p$ denotes the empirical quantile of the predictive distribution.
+    The optimal ``beta`` is obtained by numerical minimization of the
+    interval length with respect to ``beta`` over the admissible domain
+    [0, alpha].
+
+    Parameters
+    ----------
+    alpha : float
+        Target tail probability. Must satisfy ``0 < alpha < 1``.
+    predictions : np.ndarray
+        One-dimensional array of predictive samples from which
+        empirical quantiles are computed.
+    method : str, optional
+        Quantile calculation method passed to ``numpy.quantile``.
+        Defaults to 'median_unbiased'.
+
+    Returns
+    -------
+    float
+        The optimal ``beta`` in the interval [0, alpha].
+
+    Raises
+    ------
+    ValueError
+        If ``alpha`` is not in (0, 1), if ``predictions`` is not a
+        one-dimensional numpy array, or if it contains NaNs.
+    """
+
+    # Vérifications d’entrées
+    if not isinstance(alpha, (float, int)) or not (0 < float(alpha) < 1):
+        raise ValueError("'alpha' must be a float strictly between 0 and 1.")
+
+    if not isinstance(predictions, np.ndarray):
+        raise ValueError("'predictions' must be a numpy.ndarray.")
+
+    if predictions.ndim != 1:
+        raise ValueError("'predictions' must be one-dimensional.")
+
+    if np.isnan(predictions).any():
+        raise ValueError("'predictions' contains NaN values, cannot compute quantiles.")
+
     interval_length = lambda beta : np.quantile(predictions, 1 - alpha + beta, method=method) - np.quantile(predictions, beta, method=method)
     beta_opt = minimize(fun = interval_length , x0 = np.array([alpha/2]), method = 'Nelder-Mead', bounds = [(0.,alpha)])
     return beta_opt.x[0]
 
 # fonction pour calculer les bornes des intervalles de crédibilité pour les prédictions
 # = fonction pour calculer l'intervalle de crédibilité autour de la courbe
-def compute_credible_intervals_bounds(alpha, bnn_predictions, method='median_unbiased') :
+def compute_credible_intervals_bounds(
+    alpha: float,
+    bnn_predictions: np.ndarray,
+    method: str = 'median_unbiased'
+):
+    """
+    Compute pointwise (per-prediction) credible-interval bounds for a set of
+    predictive samples produced by a Bayesian Neural Network.  
+
+    For each prediction index ``i`` (row of ``bnn_predictions``), the function: 
+     
+    1. Computes the optimal quantile-shift parameter ``beta_opt`` using
+        `find_quantile_beta_opt` to minimize the length of the asymmetric
+        credible interval of level ``1 - alpha``.  
+    2. Extracts the lower and upper credible bounds using the empirical
+        quantiles:  
+        - lower = Q_{beta_opt}  
+        - upper = Q_{1 - alpha + beta_opt}  
+
+    Parameters
+    ----------
+    alpha : float
+        Target tail probability (the interval has probability mass ``1 - alpha``).  
+        Must satisfy ``0 < alpha < 1``.
+    bnn_predictions : np.ndarray
+        Array of predictive samples, typically of shape
+        ``(n_grid_points, n_samples)`` where each row corresponds to the
+        distribution of predictions at a given calendar date.
+    method : str, optional
+        Method used by ``numpy.quantile``. Default is 'median_unbiased'.
+
+    Returns
+    -------
+    Tuple[np.ndarray, np.ndarray], np.ndarray
+        A tuple ``(lower_bounds, upper_bounds)`` where both arrays have shape
+        ``(n_grid_points,)``, and an array ``beta_opt_list`` of shape
+        ``(n_grid_points,)`` containing the optimal beta for each point.
+
+    Note
+    -----
+    This function is typically used to generate credible bands around 
+    reconstructed calibration curves.
+    """
+
     predictions_size = bnn_predictions.shape[0]
     CI_upper_bounds = []
     CI_lower_bounds = []
