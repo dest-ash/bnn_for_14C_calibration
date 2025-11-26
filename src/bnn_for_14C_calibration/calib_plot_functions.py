@@ -1713,13 +1713,13 @@ def add_c14age_density_plot(
 
 
 
-# représentation des résultats de la calibration :
+# représentation des résultats de la calibration individuelle :
 # densité mesure c14 + courbe de calibration + région HDP date calibrée
 
 def plot_calib_results(
-    calibration_results=None,
-    c14age=None,
-    c14sig=None,
+    calibration_results,
+    c14age=None, # préservée juste pour raisons de compatibilité avec les versions antérieures
+    c14sig=None, # préservée juste pour raisons de compatibilité avec les versions antérieures
     
     # courbe à afficher
     plot_BNN = True,
