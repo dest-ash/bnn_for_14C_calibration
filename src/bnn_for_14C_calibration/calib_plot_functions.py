@@ -58,17 +58,63 @@ bnn_weights_dir = paths_results_dict["bnn_weights_dir"]
 
 # courbe IntCal20
 def add_IntCal20_curve(
-    ax = None,
-    figsize = None,
-    color = "green",
-    alpha=.4,
-    incertitude = True,
-    sigma_length = 1,
-    Min_x = None, Max_x = None,
-    Min_y = None, Max_y = None,
-    invert_xaxis = True,
-    domaine = ['delta14c', 'c14', 'f14c'][0]
-):
+    ax: plt.Axes = None,
+    figsize: tuple = None,
+    color: str = "green",
+    alpha: float = 0.4,
+    incertitude: bool = True,
+    sigma_length: int = 1,
+    Min_x: float = None,
+    Max_x: float = None,
+    Min_y: float = None,
+    Max_y: float = None,
+    invert_xaxis: bool = True,
+    domaine: str = ['delta14c', 'c14', 'f14c'][0]
+) -> plt.Axes:
+    """
+    Add the IntCal20 radiocarbon calibration curve to a Matplotlib axis.
+
+    The IntCal20 curve is plotted in one of three possible domains:
+
+    - ``'c14'``: radiocarbon ages (BP)
+    - ``'f14c'``: Fraction Modern F¹⁴C
+    - ``'delta14c'``: Δ¹⁴C (per mil)
+
+    Optional uncertainty bands corresponding to ``sigma_length`` standard
+    deviations may be added around the curve.
+
+    Parameters
+    ----------
+    ax : matplotlib.axes.Axes or None, optional
+        Axis on which to draw the curve. If None, uses ``plt.gca()``.
+    figsize : tuple or None, optional
+        Figure size passed to pandas' ``DataFrame.plot`` method. Only used
+        when ``ax`` is None.
+    color : str, optional
+        Main curve color (default: ``"green"``).
+    alpha : float, optional
+        Transparency of the uncertainty band (default: 0.4).
+    incertitude : bool, optional
+        If True, plot the ±σ uncertainty region around the curve.
+    sigma_length : int, optional
+        Number of standard deviations for the uncertainty band.
+    Min_x, Max_x : float or None, optional
+        Optional manual bounds for the x-axis.
+    Min_y, Max_y : float or None, optional
+        Optional manual bounds for the y-axis.
+    invert_xaxis : bool, optional
+        If True (default), invert the x-axis so that time decreases to the right,
+        consistent with radiocarbon convention.
+    domaine : {'delta14c', 'c14', 'f14c'}
+        Domain in which to plot the curve. Default is ``'delta14c'``.
+
+    Returns
+    -------
+    matplotlib.axes.Axes
+        The axis containing the plotted calibration curve.
+
+    """
+
     
     # courbe IntCal20
     IntCal20_file_path = IntCal20_dir / "IntCal20_completed.csv"
