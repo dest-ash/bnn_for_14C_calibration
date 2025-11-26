@@ -110,9 +110,9 @@ def add_IntCal20_curve(
     sigma_length : int, optional
         Number of standard deviations for the uncertainty band.
     Min_x, Max_x : float or None, optional
-        Optional manual bounds for the x-axis.
+        Optional x-axis limits; when both provided the axis limits are set.
     Min_y, Max_y : float or None, optional
-        Optional manual bounds for the y-axis.
+        Optional y-axis limits; when both provided the axis limits are set.
     invert_xaxis : bool, optional
         If True (default), invert the x-axis so that time decreases to the right,
         consistent with radiocarbon convention.
@@ -234,8 +234,10 @@ def plot_IntCal20_curve(
     sigma_length : int, optional
         Number of sigma widths for the uncertainty envelope.
 
-    Min_x, Max_x, Min_y, Max_y : float or None
-        Bounds for the X and Y axes.
+    Min_x, Max_x : float or None, optional
+        Optional x-axis limits; when both provided the axis limits are set.
+    Min_y, Max_y : float or None, optional
+        Optional y-axis limits; when both provided the axis limits are set.
     invert_xaxis : bool, optional
         If True, invert X axis (IntCal standard orientation).
     domaine : {'delta14c', 'c14', 'f14c'}
