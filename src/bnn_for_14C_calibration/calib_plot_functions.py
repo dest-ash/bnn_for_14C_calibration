@@ -1630,16 +1630,51 @@ def add_cal_date_density_plot_and_HPD_region(
 
 # représentation graphique densité âge c14
 def add_c14age_density_plot(
-    c14age,
-    c14sig,
-    ax = None,
-    color = "gray", #"blue", #"green"
-    #eps = 10**(-7), # en dessous de ce seuil, la densité est considérée nulle dans le graphique
-    support_size = 5, # demi-longueur de l'intervalle sur lequel tracer la densité de l'âge c14
-    sample_size = 1000,
-    plot_density = False,
-    fill_density = True
-) :
+    c14age: float,
+    c14sig: float,
+    ax: Optional[plt.Axes] = None,
+    color: str = "gray",
+    support_size: float = 5,
+    sample_size: int = 1000,
+    plot_density: bool = False,
+    fill_density: bool = True
+) -> plt.Axes:
+    """
+    Plot the probability density function of a radiocarbon (14C) age measurement,
+    modeled as a Gaussian distribution with mean `c14age` and standard deviation
+    `c14sig`. The plot can display the curve itself, a filled area, or both.
+
+    Parameters
+    ----------
+    c14age : float
+        The measured conventional radiocarbon age (in years BP).
+    c14sig : float
+        The standard deviation (1σ) of the radiocarbon age measurement.
+    ax : matplotlib.axes.Axes or None, optional
+        Axis on which the plot is drawn. If None, the current axis (`plt.gca()`) is used.
+    color : str, optional
+        Color used for drawing or filling the density.
+    support_size : float, optional
+        Half-width (in units of standard deviations) of the interval over which
+        the density is evaluated.
+    sample_size : int, optional
+        Number of sample points used for plotting the density curve.
+    plot_density : bool, optional
+        If True, the density curve is drawn.
+    fill_density : bool, optional
+        If True, the area between the y-axis and the density curve is filled.
+
+    Returns
+    -------
+    matplotlib.axes.Axes
+        The axis on which the plot is added.
+
+    Note
+    ----
+    The distribution is actually Gaussian when radiocarbon measurements are expressed 
+    in terms of F$^{14}$C values. Although conventional radiocarbon ages are no longer 
+    Gaussian, Gaussian density is still used solely for graphical representation purposes.
+    """
     #if type(ax) == 'NoneType' :
     if ax == None :
         ax = plt.gca()
