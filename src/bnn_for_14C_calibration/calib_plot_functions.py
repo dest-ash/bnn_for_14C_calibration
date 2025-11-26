@@ -1149,25 +1149,81 @@ def add_individual_calibration_curve_parts_1_and_2(
 
 
 def add_bnn_calibration_curve(
-    ax = None,
-    figsize = None,
-    color = 'cyan',
-    alpha=.4,
-    incertitude = True,
-    sigma_length = 1,
-    Min_x = None, Max_x = None,
-    Min_y = None, Max_y = None,
-    invert_xaxis = True,
-    domaine = ['delta14c', 'c14'][0],
-    middle_points_predictions_filepath = "last_version",
-    covariables = False,
-    label_prefix = '',
-    label_suffix = '',
-    credible_interval = False,
-    credible_interval_level = 0.95,
-    credible_color = None,
-    credible_alpha = None
-) :
+    ax: Optional[plt.Axes] = None,
+    figsize: Optional[Tuple[int, int]] = None,
+    color: str = 'cyan',
+    alpha: float = .4,
+    incertitude: bool = True,
+    sigma_length: int = 1,
+    Min_x: Optional[float] = None, Max_x: Optional[float] = None,
+    Min_y: Optional[float] = None, Max_y: Optional[float] = None,
+    invert_xaxis: bool = True,
+    domaine: str = ['delta14c', 'c14', 'f14c'][0],
+    covariables: bool = False,
+    label_prefix: str = '',
+    label_suffix: str = '',
+    credible_interval: bool = False,
+    credible_interval_level: float = 0.95,
+    credible_color: Optional[str] = None,
+    credible_alpha: Optional[float] = None
+) -> plt.Axes:
+    """
+    Add the full BNN calibration curve (concatenated parts 1 and 2) to a given
+    matplotlib axis.
+
+    This function:
+    
+    - loads precomputed BNN predictions from both sections of the calibration model,
+      previously concatenated using ``concatenate_curves_parts``;
+    - rescales the middle points to calendar ages (BP);
+    - converts predictions to the selected domain (Δ14C, 14C age, or F14C);
+    - plots the mean BNN prediction curve;
+    - optionally adds the ±σ uncertainty band;
+    - optionally adds credible intervals obtained from the posterior predictive samples.
+
+    Parameters
+    ----------
+    ax : matplotlib.axes.Axes or None, optional
+        Axis to draw on. If ``None``, the current axis from ``matplotlib.pyplot.gca()``
+        is used. Default is ``None``.
+    figsize : tuple(int, int) or None, optional
+        Size of the matplotlib figure used by the underlying ``DataFrame.plot`` call.
+    color : str, optional
+        Color used for plotting the curve and uncertainty bands.
+    alpha : float, optional
+        Transparency level for uncertainty shading and credible interval bands.
+    incertitude : bool, optional
+        Whether to add the ±σ uncertainty band around the mean curve.
+    sigma_length : int, optional
+        Width of the uncertainty band in standard deviations.
+    Min_x, Max_x : float or None, optional
+        Optional x-axis limits; when both provided the axis limits are set.
+    Min_y, Max_y : float or None, optional
+        Optional y-axis limits; when both provided the axis limits are set.
+    invert_xaxis : bool, optional
+        Whether to invert the x-axis (used for IntCal-style plots).
+    domaine : {'delta14c', 'c14', 'f14c'}, optional
+        Domain of radiocarbon quantities displayed.
+    covariables : bool, optional
+        Whether to use BNN predictions trained with covariates.
+    label_prefix : str, optional
+        String prepended to the curve label.
+    label_suffix : str, optional
+        String appended to the curve label.
+    credible_interval : bool, optional
+        Whether to compute and display credible intervals for the BNN predictions.
+    credible_interval_level : float, optional
+        Credible interval level (e.g., 0.95 for 95% CI).
+    credible_color : str or None, optional
+        Color of the credible interval shading (defaults to ``color``).
+    credible_alpha : float or None, optional
+        Transparency of the credible interval shading (defaults to ``alpha``).
+
+    Returns
+    -------
+    matplotlib.axes.Axes
+        The axis containing the plotted BNN calibration curve.
+    """
 
     # résultats issus de la concatenation de deux parties de la courbe
     concatenated_results = concatenate_curves_parts(
