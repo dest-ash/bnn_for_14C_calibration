@@ -1020,23 +1020,78 @@ def plot_individual_calibration_curve_part_2(
     
 
 def add_individual_calibration_curve_parts_1_and_2(
-    ax = None,
-    figsize = None,
-    color = 'cyan',
-    alpha=.4,
-    incertitude = True,
-    sigma_length = 1,
-    Min_x = None, Max_x = None,
-    Min_y = None, Max_y = None,
-    invert_xaxis = True,
-    domaine = ['delta14c', 'c14'][0],
-    middle_points_predictions_filepath = "last_version",
-    covariables = False,
-    credible_interval = False,
-    credible_interval_level = 0.95,
-    credible_color = None,
-    credible_alpha = None
-) :
+    ax: Optional[plt.Axes] = None,
+    figsize: Optional[Tuple[int, int]] = None,
+    color: str = 'cyan',
+    alpha: float = .4,
+    incertitude: bool = True,
+    sigma_length: int = 1,
+    Min_x: Optional[float] = None, Max_x: Optional[float] = None,
+    Min_y: Optional[float] = None, Max_y: Optional[float] = None,
+    invert_xaxis: bool = True,
+    domaine: str = ['delta14c', 'c14', 'f14c'][0],
+    covariables: bool = False,
+    credible_interval: bool = False,
+    credible_interval_level: float = 0.95,
+    credible_color: Optional[str] = None,
+    credible_alpha: Optional[float] = None
+) -> plt.Axes:
+    """
+    Add both parts (1 and 2) of the BNN calibration curve to the
+    provided matplotlib axis.
+
+    This function successively calls:
+
+    - ``add_individual_calibration_curve_part_1`` for the recent period,
+    - ``add_individual_calibration_curve_part_2`` for the older period.
+
+    It manages:
+    
+    - axis inversion only once,
+    - legend suffix depending on whether covariates are used,
+    - forwarding of all visual and uncertainty options,
+    - consistent handling of credible intervals.
+
+    Parameters
+    ----------
+    ax : matplotlib.axes.Axes or None, optional
+        Axis on which to draw the curves. If ``None``, the axis is taken from
+        ``add_individual_calibration_curve_part_1``.
+    figsize : tuple(int, int) or None, optional
+        Figure size used by the underlying plot calls.
+    color : str, optional
+        Color used for both BNN curve parts.
+    alpha : float, optional
+        Transparency for uncertainty or credible interval fills.
+    incertitude : bool, optional
+        Whether to draw the ±σ uncertainty band around the mean curve.
+    sigma_length : int, optional
+        Number of standard deviations for the uncertainty band.
+    Min_x, Max_x : float or None, optional
+        Optional x-axis limits; when both provided the axis limits are set.
+    Min_y, Max_y : float or None, optional
+        Optional y-axis limits; when both provided the axis limits are set.
+    invert_xaxis : bool, optional
+        If True, the x-axis is inverted (IntCal convention).
+    domaine : {'delta14c', 'c14', 'f14c'}, optional
+        Domain of radiocarbon quantities displayed.
+    covariables : bool, optional
+        Whether to use BNN predictions trained with covariates.
+        This affects the legend suffix.
+    credible_interval : bool, optional
+        If True, compute and plot pointwise credible intervals from predictive samples.
+    credible_interval_level : float, optional
+        Credible interval level (e.g. 0.95 for 95% credible interval). Default 0.95.
+    credible_color : str or None, optional
+        Color for the credible interval fill. If ``None`` the main ``color`` is used.
+    credible_alpha : float or None, optional
+        Alpha transparency for the credible interval fill. If ``None`` ``alpha`` is used.
+
+    Returns
+    -------
+    matplotlib.axes.Axes
+        The axis containing both parts of the BNN calibration curve.
+    """
 
     if not covariables :
         # à donner uniquement à un graphique (ici part_1) pour la légende en cas de covariables
@@ -1057,7 +1112,6 @@ def add_individual_calibration_curve_parts_1_and_2(
             Min_y = Min_y, Max_y = Max_y,
             invert_xaxis = invert_xaxis,
             domaine = domaine,
-            middle_points_predictions_part_2_filepath = middle_points_predictions_filepath,
             covariables = covariables,
             label_prefix = '', # la légende apparaît
             label_suffix = label_suffix, # gestion de la présence ou non des covariables dans la légende
@@ -1068,7 +1122,7 @@ def add_individual_calibration_curve_parts_1_and_2(
     )
 
     if invert_xaxis :
-        # on inverse plus l'axe une deuxième fois
+        # on n'inverse plus l'axe une deuxième fois
         invert_xaxis = False
     
     ax = add_individual_calibration_curve_part_2(
@@ -1082,7 +1136,6 @@ def add_individual_calibration_curve_parts_1_and_2(
             Min_y = Min_y, Max_y = Max_y,
             invert_xaxis = invert_xaxis,
             domaine = domaine,
-            middle_points_predictions_part_2_filepath = middle_points_predictions_filepath,
             covariables = covariables,
             label_prefix = '_', # pour supprimer la double apparition dans la légende
             label_suffix = '',
