@@ -67,3 +67,4 @@ release.sh
 # autres fichiers
 mkdocs_cheatsheet.md
 0_conda_env_cheatsheet.txt
+site/
