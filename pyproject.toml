@@ -2,7 +2,7 @@
 name = "bnn_for_14C_calibration"
 version = "0.1.0"
 description = "Bayesian Neural Networks methods for radiocarbon (14C) calibration"
-#readme = "README.md"
+readme = "README.md"
 license = { file = "COPYING" }
 authors = [
     { name = "Destin ASHUZA CIRUMANGA", email = "destin.cirumanga@gmail.com" }
@@ -41,7 +41,7 @@ dependencies = [
 ]
 
 [project.urls]
-Homepage = "https://github.com/dest-ash/bnn_for_14C_calibration"
+Homepage = "https://dest-ash.github.io/bnn_for_14C_calibration/"
 Repository = "https://github.com/dest-ash/bnn_for_14C_calibration.git"
 
 [build-system]
