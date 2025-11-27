@@ -7,6 +7,7 @@ Description of helper functions for Bayesian modeling:
       show_if_no_docstring: true
       show_signature: true
       separate_signature: false
+      show_source: false
       show_submodules: false
 ::: bnn_for_14C_calibration.bnn_models_built_in_utils.independent_gaussian_posterior
     options:
@@ -15,6 +16,7 @@ Description of helper functions for Bayesian modeling:
       show_if_no_docstring: true
       show_signature: true
       separate_signature: false
+      show_source: false
       show_submodules: false
 ::: bnn_for_14C_calibration.bnn_models_built_in_utils.bnn_make_predictions_
     options:
@@ -23,6 +25,7 @@ Description of helper functions for Bayesian modeling:
       show_if_no_docstring: true
       show_signature: true
       separate_signature: false
+      show_source: false
       show_submodules: false
 ::: bnn_for_14C_calibration.bnn_models_built_in_utils.bnn_load_predictions_
     options:
@@ -31,4 +34,5 @@ Description of helper functions for Bayesian modeling:
       show_if_no_docstring: true
       show_signature: true
       separate_signature: false
+      show_source: false
       show_submodules: false

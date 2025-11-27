@@ -39,7 +39,7 @@ DEFAULT_OPTIONS = [
     "      show_if_no_docstring: true",
     "      show_signature: true",
     "      separate_signature: false",
-#    "      show_source: false",
+    "      show_source: false",
 #    "      resolve_aliases: false",
     "      show_submodules: false",
 ]
