@@ -104,8 +104,9 @@ def extract_drive_file_id(url: str) -> Union[str, None]:
     Parameters
     ----------
     url : str
-        The public Google Drive file URL.
+        The public Google Drive file URL.  
         Examples include:
+
         - https://drive.google.com/file/d/FILE_ID/view?usp=sharing
         - https://drive.google.com/open?id=FILE_ID
 
@@ -163,7 +164,6 @@ def download_from_google_drive(
     -----
     - Parent directories will be created automatically if they do not exist.
     - Uses the `gdown` library for downloading from Google Drive.
-    - Keeps emojis in printed messages for better console feedback.
 
     Examples
     --------
@@ -290,7 +290,7 @@ def download_github_with_drive_map(
     Parameters
     ----------
     api_url : str
-        GitHub API URL pointing to the folder to download.
+        GitHub API URL pointing to the folder to download.  
         Example: ``https://api.github.com/repos/username/repo/contents/models``
     local_dir : Path
         Local directory where the contents will be downloaded.
