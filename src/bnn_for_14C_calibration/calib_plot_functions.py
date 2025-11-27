@@ -1998,22 +1998,31 @@ def plot_calib_results(
     plt.show()
 
 
-
+# fonctions publiques du module
 __all__ = [
-    "add_IntCal20_curve",
-    "find_quantile_beta_opt",
-    "compute_credible_intervals_bounds",
-    "add_individual_calibration_curve_part_1",
-    "add_individual_calibration_curve_part_2",
-    "add_individual_calibration_curve_parts_1_and_2",
-    "add_bnn_calibration_curve",
-    "add_cal_date_density_plot_and_HPD_region",
-    "add_c14age_density_plot",
-
     # fonctions d'affichage
     "plot_calib_results", 
     "plot_individual_calibration_curve_part_1", 
     "plot_individual_calibration_curve_part_2", 
     "plot_bnn_calibration_curve", 
     "plot_IntCal20_curve"
+]
+
+
+# toutes les fonctions du module
+all_functions = [
+    "add_IntCal20_curve",
+    "plot_IntCal20_curve",
+    "find_quantile_beta_opt",
+    "compute_credible_intervals_bounds",
+    "add_individual_calibration_curve_part_1",
+    "plot_individual_calibration_curve_part_1",
+    "add_individual_calibration_curve_part_2",
+    "plot_individual_calibration_curve_part_2",
+    "add_individual_calibration_curve_parts_1_and_2",
+    "add_bnn_calibration_curve",
+    "plot_bnn_calibration_curve",
+    "add_cal_date_density_plot_and_HPD_region",
+    "add_c14age_density_plot",
+    "plot_calib_results"  
 ]

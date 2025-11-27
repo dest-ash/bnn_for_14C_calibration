@@ -1062,7 +1062,7 @@ def create_features(
     return X_train_with_covariables, X_val_with_covariables, X_test_with_covariables, covariables_max_values_from_training_stage, covariables_min_values_from_training_stage
 
 
-
+# fonctions publiques du module
 __all__ = [
     "bnn_reg_model",
     "bnn_load_model_part_1",
@@ -1072,3 +1072,6 @@ __all__ = [
     "create_and_fit_PaleoIntensity_curve",
     "create_features"
 ]
+
+# toutes les fonctions du module
+all_functions = __all__

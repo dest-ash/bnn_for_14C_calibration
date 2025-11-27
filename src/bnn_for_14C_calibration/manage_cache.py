@@ -603,11 +603,24 @@ def download_cache_lib_data(overwrite: bool = False) -> None:
 
 
 
-# fonctions publiques
+# fonctions publiques du module
 __all__ = [
     # fonctions de gestion du cache local
     "download_cache_lib_data",
     "clear_cache"
+]
+
+
+# toutes les fonctions du module
+all_functions = [
+    "clear_cache",
+    "is_google_drive_url",
+    "extract_drive_file_id",
+    "download_from_google_drive",
+    "download_from_huggingface",
+    "download_github_with_drive_map",
+    "download_cache_lib_data"
+
 ]
 
 if __name__ == "__main__":

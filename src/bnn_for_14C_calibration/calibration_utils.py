@@ -1763,7 +1763,7 @@ def compute_HPD_regions(
         }
 
 
-
+# fonctions publiques du module
 __all__ = [
     "mono_cal_date_approx_density",
     "_mono_cal_date_approx_density_on_middle_points_",
@@ -1776,5 +1776,7 @@ __all__ = [
     "mono_cal_date_exact_approx_quantile_fct",
     "optimise_credible_interval",
     "compute_HPD_regions"
-
 ]
+
+# toutes les fonctions du module
+all_functions = __all__

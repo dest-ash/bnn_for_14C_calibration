@@ -845,7 +845,7 @@ def calendar_to_bp(
             raise ValueError("Era must be 'BCE' or 'CE'.")
 
 
-
+# fonctions publiques du module
 __all__ = [
     "get_lib_data_paths",
     "load_data",
@@ -869,6 +869,10 @@ __all__ = [
     "calendar_to_bp"
 ]
 
+# toutes les fonctions du module (à iclure dans la doc)
+all_functions = __all__
+
+# fonction à supprimer si pas usage ultérieur
 not_included_in_doc = [
     "read_params_from_file"
 ]

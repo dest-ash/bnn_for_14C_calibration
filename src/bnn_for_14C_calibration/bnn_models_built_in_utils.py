@@ -209,9 +209,13 @@ def bnn_load_predictions_(filepath: str) -> Tuple[np.ndarray, int, int]:
     return predictions_array, nb_intervals, nb_curves
 
 
+# fonctions publiques du module
 __all__ = [
     "gaussian_prior",
     "independent_gaussian_posterior",
     "bnn_make_predictions_",
     "bnn_load_predictions_"
 ]
+
+# toutes les fonctions du module
+all_functions = __all__
