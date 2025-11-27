@@ -4,8 +4,8 @@ Welcome to the GitHub repository of the **`bnn_for_14C_calibration`** Python lib
 
 ## Overview
 
-This library implements algorithms based on Bayesian Neural Networks (BNN) for $^{14}$C calibration.  
-Among available functionalities, we can find : the independent calibration of a $^{14}$C age (individual calibration), the joint calibration of several $^{14}$C ages (simultaneous calibration), the independent calibration using the IntCal20 curve for comparisons with BNN methods results or the plotting of calibration results and curves.
+This library implements algorithms based on Bayesian Neural Networks (BNN) for radiocarbon (14C) calibration.  
+Among available functionalities, we can find : the independent calibration of a conventional radiocarbon age (individual calibration), the joint calibration of several conventional radiocarbon ages (simultaneous calibration), the independent calibration using the IntCal20 curve for comparisons with BNN methods results or the plotting of calibration results and curves.
 
 ## Installation
 
