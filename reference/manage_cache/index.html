@@ -18,7 +18,7 @@
         <link rel="prev" href="../calib_plot_functions/">
       
       
-        <link rel="next" href="../utils/">
+        <link rel="next" href="../utils_dev/">
       
       
       <link rel="icon" href="../../assets/images/favicon.png">
@@ -464,7 +464,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../utils/" class="md-nav__link">
+      <a href="../utils_dev/" class="md-nav__link">
         
   
   
@@ -505,7 +505,7 @@
   
   
   <span class="md-ellipsis">
-    Bayesian modeling and calibration
+    Bayesian modeling
     
   </span>
   
@@ -516,7 +516,7 @@
         <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_3_2_label" aria-expanded="false">
           <label class="md-nav__title" for="__nav_3_2">
             <span class="md-nav__icon md-icon"></span>
-            Bayesian modeling and calibration
+            Bayesian modeling
           </label>
           <ul class="md-nav__list" data-md-scrollfix>
             
@@ -527,7 +527,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../bnn_models_built_in_utils/" class="md-nav__link">
+      <a href="../bnn_models_built_in_utils_dev/" class="md-nav__link">
         
   
   
@@ -550,12 +550,83 @@
   
   
     <li class="md-nav__item">
-      <a href="../bnn_models_built_in/" class="md-nav__link">
+      <a href="../bnn_models_built_in_dev/" class="md-nav__link">
         
   
   
   <span class="md-ellipsis">
     Built in models
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_3_3" >
+        
+          
+          <label class="md-nav__link" for="__nav_3_3" id="__nav_3_3_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    Calibration
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_3_3_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_3_3">
+            <span class="md-nav__icon md-icon"></span>
+            Calibration
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../calibration_utils_dev/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Helper functions for calibration
     
   </span>
   
@@ -573,12 +644,12 @@
   
   
     <li class="md-nav__item">
-      <a href="../calibration_utils/" class="md-nav__link">
+      <a href="../calibration_dev/" class="md-nav__link">
         
   
   
   <span class="md-ellipsis">
-    Helper functions for calibration
+    Calibration functions
     
   </span>
   
@@ -592,6 +663,52 @@
           </ul>
         </nav>
       
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../calib_plot_functions_dev/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Plotting functions
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../manage_cache_dev/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Local cache management
+    
+  </span>
+  
+
+      </a>
     </li>
   
 
@@ -788,165 +905,6 @@ If <code>overwrite</code> is set to True, any existing cache will be removed bef
 </code></pre></div>
 
 
-            <details class="quote">
-              <summary>Source code in <code>src/bnn_for_14C_calibration/manage_cache.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">525</span>
-<span class="normal">526</span>
-<span class="normal">527</span>
-<span class="normal">528</span>
-<span class="normal">529</span>
-<span class="normal">530</span>
-<span class="normal">531</span>
-<span class="normal">532</span>
-<span class="normal">533</span>
-<span class="normal">534</span>
-<span class="normal">535</span>
-<span class="normal">536</span>
-<span class="normal">537</span>
-<span class="normal">538</span>
-<span class="normal">539</span>
-<span class="normal">540</span>
-<span class="normal">541</span>
-<span class="normal">542</span>
-<span class="normal">543</span>
-<span class="normal">544</span>
-<span class="normal">545</span>
-<span class="normal">546</span>
-<span class="normal">547</span>
-<span class="normal">548</span>
-<span class="normal">549</span>
-<span class="normal">550</span>
-<span class="normal">551</span>
-<span class="normal">552</span>
-<span class="normal">553</span>
-<span class="normal">554</span>
-<span class="normal">555</span>
-<span class="normal">556</span>
-<span class="normal">557</span>
-<span class="normal">558</span>
-<span class="normal">559</span>
-<span class="normal">560</span>
-<span class="normal">561</span>
-<span class="normal">562</span>
-<span class="normal">563</span>
-<span class="normal">564</span>
-<span class="normal">565</span>
-<span class="normal">566</span>
-<span class="normal">567</span>
-<span class="normal">568</span>
-<span class="normal">569</span>
-<span class="normal">570</span>
-<span class="normal">571</span>
-<span class="normal">572</span>
-<span class="normal">573</span>
-<span class="normal">574</span>
-<span class="normal">575</span>
-<span class="normal">576</span>
-<span class="normal">577</span>
-<span class="normal">578</span>
-<span class="normal">579</span>
-<span class="normal">580</span>
-<span class="normal">581</span>
-<span class="normal">582</span>
-<span class="normal">583</span>
-<span class="normal">584</span>
-<span class="normal">585</span>
-<span class="normal">586</span>
-<span class="normal">587</span>
-<span class="normal">588</span>
-<span class="normal">589</span>
-<span class="normal">590</span>
-<span class="normal">591</span>
-<span class="normal">592</span>
-<span class="normal">593</span>
-<span class="normal">594</span>
-<span class="normal">595</span>
-<span class="normal">596</span>
-<span class="normal">597</span>
-<span class="normal">598</span>
-<span class="normal">599</span>
-<span class="normal">600</span>
-<span class="normal">601</span>
-<span class="normal">602</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">download_cache_lib_data</span><span class="p">(</span><span class="n">overwrite</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">    Download and initialize the local cache directory for the library.</span>
-
-<span class="sd">    This function manages the creation (or re-creation) of the local cache directory</span>
-<span class="sd">    used by the package to store pre-downloaded model and data files.  </span>
-<span class="sd">    If ``overwrite`` is set to True, any existing cache will be removed before re-downloading.</span>
-
-<span class="sd">    Parameters</span>
-<span class="sd">    ----------</span>
-<span class="sd">    overwrite : bool, optional</span>
-<span class="sd">        Whether to force re-downloading and replace any existing cache directory (default is False).</span>
-
-<span class="sd">    Returns</span>
-<span class="sd">    -------</span>
-<span class="sd">    None</span>
-
-<span class="sd">    Notes</span>
-<span class="sd">    -----</span>
-<span class="sd">    - The cache directory ``.bnn_for_14C_calibration`` is created in the user&#39;s home directory.</span>
-<span class="sd">    - Requires an active internet connection for the first run.</span>
-<span class="sd">    - Disk space usage remains below 1 GB.</span>
-<span class="sd">    - This function internally calls the functions `clear_cache` and `download_github_with_drive_map`.</span>
-
-<span class="sd">    Examples</span>
-<span class="sd">    --------</span>
-<span class="sd">    &gt;&gt;&gt; download_cache_lib_data(overwrite=False)</span>
-<span class="sd">    This may be the first time you need package functions that use </span>
-<span class="sd">    local cache data to work. A local cache directory is going to be </span>
-<span class="sd">    created and will be used after if needed without a new downloading</span>
-<span class="sd">    unless you delete the cache. To download this cache, network connection </span>
-<span class="sd">    must be available; also some disk space is required (less than 1 GB total).</span>
-<span class="sd">    ******************** Creating cache directory at: /home/user/.bnn_for_14C_calibration ********************</span>
-<span class="sd">    ✅ Cache directory created at: /home/user/.bnn_for_14C_calibration, and filled with all the </span>
-<span class="sd">    contents of the &#39;models&#39; directory downloaded from GitHub and Google Drive.</span>
-
-<span class="sd">    &gt;&gt;&gt; download_cache_lib_data(overwrite=True)</span>
-<span class="sd">    overwrite is True : the cache will be cleared before </span>
-<span class="sd">    downloading it again...</span>
-<span class="sd">    🗑️ removing cache directory at : /home/user/.bnn_for_14C_calibration...</span>
-<span class="sd">    🗑️ cache removed!</span>
-<span class="sd">    ******************** Creating cache directory at: /home/user/.bnn_for_14C_calibration ********************</span>
-<span class="sd">    ✅ Cache directory created at: /home/user/.bnn_for_14C_calibration, and filled with all the </span>
-<span class="sd">    contents of the &#39;models&#39; directory downloaded from GitHub and Google Drive.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
-    <span class="c1"># Vérifie si le cache doit être téléchargé ou régénéré</span>
-    <span class="k">if</span> <span class="n">overwrite</span> <span class="ow">or</span> <span class="ow">not</span> <span class="p">(</span><span class="n">CACHE_DIR</span><span class="o">.</span><span class="n">exists</span><span class="p">()</span> <span class="ow">and</span> <span class="n">CACHE_DIR</span><span class="o">.</span><span class="n">is_dir</span><span class="p">()):</span>
-        <span class="k">if</span> <span class="n">overwrite</span><span class="p">:</span>
-            <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;&quot;&quot;</span>
-<span class="s2">                overwrite is </span><span class="si">{</span><span class="n">overwrite</span><span class="si">}</span><span class="s2"> : the cache will be cleared before </span>
-<span class="s2">                downloading it again...</span>
-<span class="s2">            &quot;&quot;&quot;</span><span class="p">)</span>
-            <span class="n">clear_cache</span><span class="p">()</span>
-        <span class="k">else</span><span class="p">:</span>
-            <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;&quot;&quot;</span>
-<span class="s2">                This may be the first time you need package functions that use </span>
-<span class="s2">                local cache data to work. A local cache directory is going to be </span>
-<span class="s2">                created and will be used after if needed without a new downloading</span>
-<span class="s2">                unless you delete the cache. To download this cache, network connection </span>
-<span class="s2">                must be available; also some disk space is required (less than 1 GB total).</span>
-<span class="s2">            &quot;&quot;&quot;</span><span class="p">)</span>
-
-        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;******************** Creating cache directory at: </span><span class="si">{</span><span class="n">CACHE_DIR</span><span class="si">}</span><span class="s2"> ********************&quot;</span><span class="p">)</span>
-        <span class="n">CACHE_DIR</span><span class="o">.</span><span class="n">mkdir</span><span class="p">(</span><span class="n">parents</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">exist_ok</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
-        <span class="n">MODELS_DIR_LOCAL</span><span class="o">.</span><span class="n">mkdir</span><span class="p">(</span><span class="n">exist_ok</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
-
-        <span class="c1"># Télécharge les données de modèles depuis GitHub (et éventuellement Google Drive)</span>
-        <span class="n">download_github_with_drive_map</span><span class="p">(</span><span class="n">MODELS_DIR_API_URL</span><span class="p">,</span> <span class="n">MODELS_DIR_LOCAL</span><span class="p">)</span>
-
-        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;&quot;&quot;</span>
-<span class="s2">        ✅ Cache directory created at: </span><span class="si">{</span><span class="n">CACHE_DIR</span><span class="si">}</span><span class="s2">, and filled with all the </span>
-<span class="s2">        contents of the &#39;models&#39; directory downloaded from GitHub and Google Drive.</span>
-<span class="s2">        &quot;&quot;&quot;</span><span class="p">)</span>
-    <span class="k">else</span><span class="p">:</span>
-        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;&quot;&quot;</span>
-<span class="s2">            An existing cache directory is located at </span><span class="si">{</span><span class="n">CACHE_DIR</span><span class="si">}</span><span class="s2"> and overwrite is </span><span class="si">{</span><span class="n">overwrite</span><span class="si">}</span><span class="s2">.</span>
-<span class="s2">            If you wish to force the cache download, set overwrite to True.</span>
-<span class="s2">        &quot;&quot;&quot;</span><span class="p">)</span>
-</code></pre></div></td></tr></table></div>
-            </details>
     </div>
 
 </div>
@@ -1037,77 +995,6 @@ is printed to indicate that there is no existing cache to remove.</p>
 </code></pre></div>
 
 
-            <details class="quote">
-              <summary>Source code in <code>src/bnn_for_14C_calibration/manage_cache.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">40</span>
-<span class="normal">41</span>
-<span class="normal">42</span>
-<span class="normal">43</span>
-<span class="normal">44</span>
-<span class="normal">45</span>
-<span class="normal">46</span>
-<span class="normal">47</span>
-<span class="normal">48</span>
-<span class="normal">49</span>
-<span class="normal">50</span>
-<span class="normal">51</span>
-<span class="normal">52</span>
-<span class="normal">53</span>
-<span class="normal">54</span>
-<span class="normal">55</span>
-<span class="normal">56</span>
-<span class="normal">57</span>
-<span class="normal">58</span>
-<span class="normal">59</span>
-<span class="normal">60</span>
-<span class="normal">61</span>
-<span class="normal">62</span>
-<span class="normal">63</span>
-<span class="normal">64</span>
-<span class="normal">65</span>
-<span class="normal">66</span>
-<span class="normal">67</span>
-<span class="normal">68</span>
-<span class="normal">69</span>
-<span class="normal">70</span>
-<span class="normal">71</span>
-<span class="normal">72</span>
-<span class="normal">73</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">clear_cache</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">    Remove the entire local cache directory used by the library.</span>
-
-<span class="sd">    This function deletes the cache directory and all its contents from</span>
-<span class="sd">    the local filesystem. If the cache directory does not exist, a message</span>
-<span class="sd">    is printed to indicate that there is no existing cache to remove.</span>
-
-<span class="sd">    Parameters</span>
-<span class="sd">    ----------</span>
-<span class="sd">    None</span>
-
-<span class="sd">    Returns</span>
-<span class="sd">    -------</span>
-<span class="sd">    None</span>
-
-<span class="sd">    Notes</span>
-<span class="sd">    -----</span>
-<span class="sd">    - The cache directory path is set to `/home/user/.bnn_for_14C_calibration`.</span>
-<span class="sd">    - This operation is irreversible; all cached data will be lost.</span>
-<span class="sd">    - The cache data can be downloaded again by using the function `download_cache_lib_data`.</span>
-
-<span class="sd">    Examples</span>
-<span class="sd">    --------</span>
-<span class="sd">    &gt;&gt;&gt; clear_cache()</span>
-<span class="sd">    🗑️ removing cache directory at: /home/user/.bnn_for_14C_calibration...</span>
-<span class="sd">    🗑️ cache removed!</span>
-<span class="sd">    &quot;&quot;&quot;</span>
-    <span class="k">if</span> <span class="n">CACHE_DIR</span><span class="o">.</span><span class="n">exists</span><span class="p">():</span>
-        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;🗑️ removing cache directory at: </span><span class="si">{</span><span class="n">CACHE_DIR</span><span class="si">}</span><span class="s2">...&quot;</span><span class="p">)</span>
-        <span class="n">shutil</span><span class="o">.</span><span class="n">rmtree</span><span class="p">(</span><span class="n">CACHE_DIR</span><span class="p">)</span>
-        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;🗑️ cache removed!&quot;</span><span class="p">)</span>
-    <span class="k">else</span><span class="p">:</span>
-        <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;ℹ️ No existing cache!&quot;</span><span class="p">)</span>
-</code></pre></div></td></tr></table></div>
-            </details>
     </div>
 
 </div>
