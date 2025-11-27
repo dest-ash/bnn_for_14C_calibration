@@ -1717,42 +1717,112 @@ def add_c14age_density_plot(
 # densité mesure c14 + courbe de calibration + région HDP date calibrée
 
 def plot_calib_results(
-    calibration_results,
-    c14age=None, # préservée juste pour raisons de compatibilité avec les versions antérieures
-    c14sig=None, # préservée juste pour raisons de compatibilité avec les versions antérieures
+    calibration_results: Dict[str, Any],
+    c14age: float = None,
+    c14sig: float = None,
     
-    # courbe à afficher
-    plot_BNN = True,
-    covariables = None,
-    color_BNN = 'blue',
-    parts_1_and_2 = True,
-    part_1 = False,
-    part_2 = False,
+    plot_BNN: bool = True,
+    covariables: bool = None,
+    color_BNN: str = 'blue',
+    parts_1_and_2: bool = True,
+    part_1: bool = False,
+    part_2: bool = False,
     
+    plot_IntCal20: bool = False,
+    color_IntCal20: str = 'green',
     
-    plot_IntCal20 = False,
-    color_IntCal20 = 'green',
-    
-    # taille et paramètres de la figure
     figsize = None,
-    fontsize_legend = ['xx-small', 'x-small', 'small', 'medium', 'large', 'x-large', 'xx-large'][2],
+    fontsize_legend: str = ['xx-small', 'x-small', 'small', 'medium', 'large', 'x-large', 'xx-large'][2],
     fig = None,
     axs = None,
-    add_grid = False,
+    add_grid: bool = False,
     
-    # autres paramètres pour la date calibrée
-    color_cal_date = "cyan", #"blue", #"green"
-    eps = 10**(-7), # en dessous de ce seuil, la densité est considérée nulle dans le graphique
-    plot_HPD_bounds = False,
-    plot_HPD_threshold = False,
+    color_cal_date: str = "cyan",
+    eps: float = 10**(-7),
+    plot_HPD_bounds: bool = False,
+    plot_HPD_threshold: bool = False,
     
-    # autres paramètres pour la mesure c14
-    color_c14age = "gray", #"blue", #"green"
-    support_size = 5, # demi-longueur de l'intervalle sur lequel tracer la densité de l'âge c14
-    sample_size = 1000,
-    plot_density = False,
-    fill_density = True
-):
+    color_c14age: str = "gray",
+    support_size: float = 5,
+    sample_size: int = 1000,
+    plot_density: bool = False,
+    fill_density: bool = True
+) -> None:
+    """
+    Plot a full graphical summary of individual radiocarbon calibration results.
+    
+    The figure combines:
+
+    - the probability density of the radiocarbon measurement,
+    - the calibration curve (BNN-based or IntCal20),
+    - the posterior density of the calibrated date with its HPD region,
+    - a blank panel for layout aesthetics.
+
+    Parameters
+    ----------
+    calibration_results : Dict[str, Any]
+        A dictionary containing all required calibration outputs
+        (c14age, c14sig, covariables, posterior density, HPD intervals, etc.).
+    c14age : float, optional
+        Preserved for backward compatibility; the radiocarbon age (will be overwritten
+        by the value inside `calibration_results`).
+    c14sig : float, optional
+        Preserved for backward compatibility; the radiocarbon age uncertainty (will be 
+        overwritten by the value inside `calibration_results`).
+    plot_BNN : bool, optional
+        If True, plot the BNN calibration curve (unless covariables is None).
+    covariables : bool or None, optional
+        Preserved for backward compatibility; whether covariates were used for BNN 
+        calibration (will be overwritten by the value inside `calibration_results`).  
+        If None, IntCal20 is used automatically.
+    color_BNN : str, optional
+        Color for the BNN calibration curve.
+    parts_1_and_2 : bool, optional
+        Whether to plot the entire BNN curve (parts 1 and 2).
+    part_1 : bool, optional
+        If True, only plot part 1 of the BNN calibration curve.
+    part_2 : bool, optional
+        If True, only plot part 2 of the BNN calibration curve.
+    plot_IntCal20 : bool, optional
+        If True, plot the IntCal20 curve instead of a BNN model.
+    color_IntCal20 : str, optional
+        Color for the IntCal20 calibration curve.
+    figsize : tuple or None, optional
+        Size of the figure in inches. If None, a default size is chosen.
+    fontsize_legend : str, optional
+        Legend font size.
+    fig : matplotlib.figure.Figure or None, optional
+        A figure instance to reuse; if None, one is created.
+    axs : array-like of Axes or None, optional
+        A 2×2 array of axes. If None, axes are created.
+    add_grid : bool, optional
+        Whether to add grid lines to all plots.
+    color_cal_date : str, optional
+        Color used for plotting the posterior distribution of the calibrated date.
+    eps : float, optional
+        Density threshold below which points are considered negligible.  
+        A negative value allows to display the posterior distribution of the 
+        calibrated date over all the entire range of the calibration curve.
+    plot_HPD_bounds : bool, optional
+        If True, display vertical HPD interval bounds.
+    plot_HPD_threshold : bool, optional
+        If True, plot the HPD threshold line.
+    color_c14age : str, optional
+        Color for the radiocarbon measurement density plot.
+    support_size : float, optional
+        Half-width of the range (in σ units) used to construct the `c14age` density.
+    sample_size : int, optional
+        Number of points in the discretized `c14age` density evaluation.
+    plot_density : bool, optional
+        Whether to draw the `c14age` density curve.
+    fill_density : bool, optional
+        Whether to fill the area under the `c14age` density curve.
+
+    Returns
+    -------
+    None
+        The function displays the figure directly using `plt.show()`.
+    """
 
     # récupération des paramètres d'entrées et choix automatique entre la courbe BNN et
     #  la courbe IntCal20 en fonction des résultats de calibration
