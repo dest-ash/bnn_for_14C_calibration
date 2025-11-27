@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+    <url>
+         <loc>https://dest-ash.github.io/bnn_for_14C_calibration/</loc>
+         <lastmod>2025-11-27</lastmod>
+    </url>
+    <url>
+         <loc>https://dest-ash.github.io/bnn_for_14C_calibration/reference/bnn_models_built_in/</loc>
+         <lastmod>2025-11-27</lastmod>
+    </url>
+    <url>
+         <loc>https://dest-ash.github.io/bnn_for_14C_calibration/reference/bnn_models_built_in_utils/</loc>
+         <lastmod>2025-11-27</lastmod>
+    </url>
+    <url>
+         <loc>https://dest-ash.github.io/bnn_for_14C_calibration/reference/calib_plot_functions/</loc>
+         <lastmod>2025-11-27</lastmod>
+    </url>
+    <url>
+         <loc>https://dest-ash.github.io/bnn_for_14C_calibration/reference/calibration/</loc>
+         <lastmod>2025-11-27</lastmod>
+    </url>
+    <url>
+         <loc>https://dest-ash.github.io/bnn_for_14C_calibration/reference/calibration_utils/</loc>
+         <lastmod>2025-11-27</lastmod>
+    </url>
+    <url>
+         <loc>https://dest-ash.github.io/bnn_for_14C_calibration/reference/manage_cache/</loc>
+         <lastmod>2025-11-27</lastmod>
+    </url>
+    <url>
+         <loc>https://dest-ash.github.io/bnn_for_14C_calibration/reference/utils/</loc>
+         <lastmod>2025-11-27</lastmod>
+    </url>
+</urlset>
