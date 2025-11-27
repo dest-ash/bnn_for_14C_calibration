@@ -192,7 +192,28 @@ def individual_calibration(
 
     Examples
     --------
-    >>> ### TODO ###
+    >>> # radiocarbon data
+    >>> c14age = 10400
+    >>> c14sig = 18
+     
+    >>> # independent calibration using BNN curve
+    >>> individual_calib_results = individual_calibration(
+    ...    c14age, c14sig, 
+    ...    sample_size=10000,
+    ...    compute_calage_posterior_mean_and_std=True
+    ...)
+    >>> print(individual_calib_results)
+    {'calage_posterior_mode': 12208, 'calage_posterior_mode_density': 0.004876364275474341, 
+    'connexe_HPD_intervals': array([[0.18939556, 0.19895774]]), 
+    'connexe_HPD_intervals_density': [0.9500607994817136], 
+    'HPD_threshold': 0.0007750276513481828, 'connexe_HPD_intervals_unscaled': array([[12051.406, 12660.058]]), 
+    'connexe_HPD_intervals_unscaled_round': array([[12051, 12661]]), 'HPD_region_length': 609, 'alpha': 0.05, 
+    'middle_points': array([-3.38430000e+00, -2.15290000e+00, -9.21500000e-01, ...,
+        5.49893275e+04,  5.49935965e+04,  5.49978655e+04]), 
+    'middle_points_density': array([0., 0., 0., ..., 0., 0., 0.]), 
+    'calage_posterior_mean': 12254, 'calage_posterior_std': 140, 
+    'calage_sample': array([12188.33655321, 11929.49681614, 12206.41856239, ...,
+       12450.48293508, 12188.77765758, 12446.75205379]), 'c14age': 10400, 'c14sig': 18, 'covariables': False}
     """
     
     # chargement des prédictions pré-sauvergardées
@@ -568,16 +589,20 @@ def IntCal20_calibration(
 
     Examples
     --------
-    >>> out = IntCal20_calibration(2850, 30)
+    >>> out = IntCal20_calibration(10400, 18)
     >>> out['connexe_HPD_intervals_unscaled_round']
-    array([[ 900, 1020]])
+    array([[12101, 12124],
+    [12129, 12132],
+    [12140, 12157],
+    [12164, 12401],
+    [12424, 12478]])
 
     >>> # Computing posterior mean and standard deviation
-    >>> out = IntCal20_calibration(2850, 30, compute_calage_posterior_mean_and_std=True)
+    >>> out = IntCal20_calibration(10400, 18, compute_calage_posterior_mean_and_std=True)
     >>> out['calage_posterior_mean']
-    960
+    12291
     >>> out['calage_posterior_std']
-    42
+    105
     """
 
     # courbe IntCal20

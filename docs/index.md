@@ -53,19 +53,119 @@ Example usage :
 
 ```python
 import bnn_for_14C_calibration as bnn
+import numpy as np
 
-# plotting calibration curves
+######## plotting calibration curves ########
 
-# independent calibration
-result = main_function(data)
-print(result)
+# the global BNN curve
+bnn.plot_bnn_calibration_curve()
+
+# the global BNN curve estimated using covariates 
+# in addition, reset extra margins
+bnn.plot_bnn_calibration_curve(covariables = True, reset_margins=True)
+
+# only a portion of the global BNN curve estimated using covariates
+bnn.plot_bnn_calibration_curve(
+    covariables = True,
+    Max_x=12400,
+    Min_x=12200,
+    Max_y=260,
+    Min_y=180
+)
+
+# only the recent part of the BNN curve
+bnn.plot_individual_calibration_curve_part_1()
+
+# only the older part of the BNN curve
+bnn.plot_individual_calibration_curve_part_2()
+
+# IntCal20 curve
+bnn.plot_IntCal20_curve(reset_margins=True)
+
+######## individual calibration ########
+
+# radiocarbon data
+c14age = 10400
+c14sig = 18
+
+# independent calibration using BNN curve
+individual_calib_results = bnn.individual_calibration(
+    c14age, c14sig, 
+    sample_size=10000,
+    compute_calage_posterior_mean_and_std=True
+)
+print(individual_calib_results)
+
+# independent calibration using the BNN curve trained with covariates
+individual_calib_results_with_covariables = bnn.individual_calibration(
+    c14age, c14sig, 
+    sample_size=10000,
+    covariables=True,
+    compute_calage_posterior_mean_and_std=True
+)
+print(individual_calib_results_with_covariables)
+
+# independent calibration using IntCal20 curve
+IntCal20_calib_results = bnn.IntCal20_calibration(
+    c14age, c14sig,
+    sample_size=10000,
+    compute_calage_posterior_mean_and_std=True
+)
+print(IntCal20_calib_results)
 
 # plotting result for independent calibration
 
-# joint calibration
+cm = 1/2.54  # cm in inches
+figsize=(17*cm, 17*cm)
+
+bnn.plot_calib_results(
+    figsize=figsize,
+    calibration_results=individual_calib_results
+)
+
+bnn.plot_calib_results(
+    figsize=figsize,
+    add_grid=True,
+    color_cal_date='green',
+    eps=-1,
+    calibration_results=individual_calib_results_with_covariables
+)
+
+# same function for plotting IntCal20 calibration results
+bnn.plot_calib_results(
+    figsize=figsize,
+    calibration_results=IntCal20_calib_results
+)
+
+######## joint calibration ########
+
+c14ages=np.array([4000, 10483])
+c14sigs=np.array([10, 18])
+
+joint_calib_results = bnn.joint_calibration(
+    c14ages = c14ages, 
+    c14sigs = c14sigs,
+    compute_calage_posterior_mode=True,
+    chaine_length=10000
+)
+print(joint_calib_results)
+
+
+######## local cache management ########
+
+# test of cache downloading
+bnn.download_cache_lib_data()
+
+# force cache downloading
+bnn.download_cache_lib_data(overwrite = True)
+
+# clear cache
+bnn.clear_cache()
 ```
 
 
-## API Reference
+## Reference
 
-See the API documentation for detailed information.
+Refer to the pages on [**Calibration functions**](reference/calibration), [**Plotting functions**](reference/calib_plot_functions) and [**Local cache management**](reference/manage_cache) in the **User Guide** of this documentation for detailed information on the inputs, outputs, and behaviour of each function.
+
+For internal functions and more details on the implementation of all library functions, please refer to the **Developer's Guide**.
