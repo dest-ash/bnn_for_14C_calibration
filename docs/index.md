@@ -21,7 +21,7 @@ Once the installation is complete, open a terminal (on Linux or macOS) or Anacon
 conda create --name myenv python=3.9.13 pip
 ```
 
-`myenv` is the name of of your environment.The command above creates an environement called `myenv` in which it installs `pip` and `Python 3.9.13`.
+`myenv` is the name of of your environment. The command above creates an environement called `myenv` in which it installs `pip` and `Python 3.9.13`.
 
 To learn more about managing Python environments with conda, please visit [this page](https://docs.conda.io/projects/conda/en/latest/user-guide/tasks/manage-environments.html).
 
@@ -36,7 +36,7 @@ conda activate myenv
 Then, the library can be installed using `pip` as follows:
 
 ```bash
-pip install bnn_for_14C_calibration
+pip install bnn-for-14C-calibration
 ```
 
 If you wish, you can also install `jupyter-notebook` in your environment (`myenv`) to test the library:

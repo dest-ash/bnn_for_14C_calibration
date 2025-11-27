@@ -1,6 +1,6 @@
 # Bayesian Neural Network For Radiocarbon Calibration
 
-Welcome to the GitHub repository of the **`bnn_for_14C_calibration`** Python library.
+Welcome to the **`bnn_for_14C_calibration`** Python library project.
 
 ## Overview
 
@@ -36,7 +36,7 @@ conda activate myenv
 Then, the library can be installed using `pip` as follows:
 
 ```bash
-pip install bnn_for_14C_calibration
+pip install bnn-for-14C-calibration
 ```
 
 If you wish, you can also install `jupyter-notebook` in your environment (`myenv`) to test the library:
