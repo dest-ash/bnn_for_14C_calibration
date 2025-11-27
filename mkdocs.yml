@@ -10,9 +10,9 @@ theme:
   name: material
   features:
     - navigation.expand
-    - content.action.edit
+    # - content.action.edit
     - content.code.annotate
-    - content.action.view
+    # - content.action.view
 
 plugins:
   - search
