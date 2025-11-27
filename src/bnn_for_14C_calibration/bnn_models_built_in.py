@@ -31,6 +31,8 @@ from typing import (
     Tuple
 )
 
+from pathlib import Path
+
 
 # ========================================================================
 # génération des chemins vers le cache local ou 
